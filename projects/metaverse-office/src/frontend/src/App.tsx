@@ -69,6 +69,16 @@ function App() {
   const [showNetwork, setShowNetwork] = useState(false)
   const [showManagementHub, setShowManagementHub] = useState(false)
   const [sceneType, setSceneType] = useState<'office' | 'courtyard'>('courtyard')
+  
+  // v3.0: 新增可视化状态
+  const [showContracts, setShowContracts] = useState(false)
+  const [showNegotiation, setShowNegotiation] = useState(false)
+  const [showDelegations, setShowDelegations] = useState(false)
+  const [showReasoning, setShowReasoning] = useState(false)
+  const [showDecisionCenter, setShowDecisionCenter] = useState(false)
+  const [selectedContract, setSelectedContract] = useState<any>(null)
+  const [selectedIntervention, setSelectedIntervention] = useState<any>(null)
+  const [showInterventionPanel, setShowInterventionPanel] = useState(false)
 
   // 存储角色位置用于对话系统
   const agentPositionsRef = useRef<Map<string, [number, number, number]>>(new Map())
@@ -161,6 +171,56 @@ function App() {
 
           {/* 协作网络可视化 - 使用简化版 */}
           {showNetwork && <SimpleCollaborationNetwork organizationId="org-001" />}
+          
+          {/* v3.0: 协作契约可视化 */}
+          {showContracts && (
+            <ContractVisualization 
+              contracts={mockContracts}
+              agentPositions={agentPositionsRef.current}
+            />
+          )}
+          
+          {/* v3.0: 协商对话气泡 */}
+          {showNegotiation && selectedContract && (
+            <NegotiationBubbles 
+              negotiation={selectedContract.negotiation}
+              agentPositions={agentPositionsRef.current}
+            />
+          )}
+          
+          {/* v3.0: 任务委托飞行动画 */}
+          {showDelegations && (
+            <TaskDelegationManager 
+              delegations={mockDelegations}
+              agentPositions={agentPositionsRef.current}
+            />
+          )}
+          
+          {/* v3.0: 推理链回放 */}
+          {showReasoning && selectedContract && (
+            <ReasoningChainPlayer 
+              contract={selectedContract}
+              agentPositions={agentPositionsRef.current}
+              onClose={() => setShowReasoning(false)}
+            />
+          )}
+          
+          {/* v3.0: 决策中心（北房） */}
+          {showDecisionCenter && (
+            <DecisionCenter 
+              pendingInterventions={mockInterventions}
+              contracts={mockContracts}
+              agentPositions={agentPositionsRef.current}
+              onSelectIntervention={(request) => {
+                setSelectedIntervention(request)
+                setShowInterventionPanel(true)
+              }}
+              onResolveIntervention={(requestId, decision) => {
+                console.log('决策已提交:', requestId, decision)
+                // TODO: 调用API提交决策
+              }}
+            />
+          )}
           
           {/* AI角色 - 从后端数据动态加载 */}
           {agents.map(agent => {
@@ -347,6 +407,51 @@ function App() {
             onClick={() => setShowManagementHub(!showManagementHub)}
           >
             🏛️ 管理中枢
+          </button>
+        </div>
+        
+        {/* v3.0 新增工具栏 */}
+        <div className="toolbar-group">
+          <button 
+            className={showContracts ? 'active' : ''}
+            onClick={() => setShowContracts(!showContracts)}
+            title="显示协作契约"
+          >
+            📜 契约
+          </button>
+          <button 
+            className={showNegotiation ? 'active' : ''}
+            onClick={() => {
+              setShowNegotiation(!showNegotiation)
+              if (!selectedContract) setSelectedContract(mockContracts[0])
+            }}
+            title="显示协商对话"
+          >
+            💬 协商
+          </button>
+          <button 
+            className={showDelegations ? 'active' : ''}
+            onClick={() => setShowDelegations(!showDelegations)}
+            title="显示任务委托"
+          >
+            📤 委托
+          </button>
+          <button 
+            className={showReasoning ? 'active' : ''}
+            onClick={() => {
+              setShowReasoning(!showReasoning)
+              if (!selectedContract) setSelectedContract(mockContracts[0])
+            }}
+            title="播放推理链"
+          >
+            ▶️ 推理
+          </button>
+          <button 
+            className={showDecisionCenter ? 'active' : ''}
+            onClick={() => setShowDecisionCenter(!showDecisionCenter)}
+            title="显示决策中心"
+          >
+            👔 决策
           </button>
         </div>
         
@@ -549,5 +654,142 @@ function AgentDetailModal({
     </div>
   )
 }
+
+// ============================================
+// v3.0 Mock Data (TODO: 替换为真实API数据)
+// ============================================
+
+const mockContracts = [
+  {
+    contractId: 'contract-001',
+    projectId: 'proj-001',
+    type: 'taskDelegation',
+    context: {
+      description: '智慧校园系统技术方案设计',
+      expectedOutcome: '技术方案文档',
+      deadline: '2026-02-22'
+    },
+    proposal: {
+      agentId: 'agent-管家-001',
+      content: '需要设计智慧校园技术架构',
+      evidence: [],
+      confidence: 0.85,
+      timestamp: '2026-02-15T09:00:00Z'
+    },
+    negotiation: [
+      {
+        round: 1,
+        agentId: 'agent-方案-001',
+        stance: 'support',
+        content: '建议采用微服务架构',
+        confidence: 0.92,
+        timestamp: '2026-02-15T09:15:00Z'
+      },
+      {
+        round: 2,
+        agentId: 'agent-研发-001',
+        stance: 'amend',
+        content: '建议增加容器化部署',
+        confidence: 0.88,
+        timestamp: '2026-02-15T09:30:00Z'
+      },
+      {
+        round: 3,
+        agentId: 'agent-方案-001',
+        stance: 'accept',
+        content: '同意最终方案',
+        timestamp: '2026-02-15T09:45:00Z'
+      }
+    ],
+    consensus: {
+      reached: true,
+      finalAgreement: '微服务+容器化架构',
+      participatingAgents: ['agent-管家-001', 'agent-方案-001', 'agent-研发-001'],
+      confidence: 0.91,
+      consensusAt: '2026-02-15T09:45:00Z'
+    },
+    execution: {
+      status: 'inProgress',
+      assignedAgentId: 'agent-方案-001',
+      deliverables: [],
+      verificationResult: undefined,
+      completedAt: undefined
+    },
+    auditTrail: {
+      createdAt: '2026-02-15T09:00:00Z',
+      consensusReachedAt: '2026-02-15T09:45:00Z',
+      executionStartedAt: '2026-02-15T10:00:00Z',
+      decisionRationale: '基于技术可行性和成本考量'
+    },
+    humanIntervention: {
+      required: false
+    }
+  }
+]
+
+const mockDelegations = [
+  {
+    id: 'delegation-001',
+    fromAgentId: 'agent-管家-001',
+    toAgentId: 'agent-方案-001',
+    taskTitle: '技术方案设计',
+    fromPosition: [0, 0, -10] as [number, number, number],
+    toPosition: [10, 0, 0] as [number, number, number],
+    status: 'accepted' as const
+  },
+  {
+    id: 'delegation-002',
+    fromAgentId: 'agent-方案-001',
+    toAgentId: 'agent-研发-001',
+    taskTitle: '架构评审',
+    fromPosition: [10, 0, 0] as [number, number, number],
+    toPosition: [-10, 0, 0] as [number, number, number],
+    status: 'flying' as const
+  }
+]
+
+const mockInterventions = [
+  {
+    requestId: 'intervention-001',
+    contractId: 'contract-002',
+    type: 'valueJudgment',
+    context: {
+      projectId: 'proj-002',
+      agentsInvolved: ['agent-研发-001', 'agent-方案-001'],
+      negotiationSummary: '关于患者数据使用的伦理争议',
+      roundsCompleted: 5,
+      whyAutoFailed: '涉及伦理判断'
+    },
+    options: [
+      {
+        id: 'option-strict',
+        description: '采用最严格的数据脱敏方案',
+        supportingAgents: ['agent-方案-001'],
+        opposingAgents: ['agent-研发-001'],
+        predictedOutcome: '隐私保护最好，模型效果下降20%',
+        risks: ['模型精度降低'],
+        evidence: []
+      },
+      {
+        id: 'option-balanced',
+        description: '采用平衡方案',
+        supportingAgents: ['agent-管家-001'],
+        opposingAgents: [],
+        predictedOutcome: '平衡隐私和效果',
+        risks: ['仍有轻微隐私风险'],
+        evidence: []
+      }
+    ],
+    agentAnalysis: {
+      recommendation: '技术上都可实现，需要人类基于价值观选择',
+      confidence: 0.3,
+      keyUncertainties: ['公司伦理底线', '客户接受度', '监管要求'],
+      whyHumanNeeded: '涉及伦理价值判断'
+    },
+    urgency: 'today',
+    status: 'pending',
+    requestedAt: '2026-02-15T10:00:00Z'
+  }
+]
 
 export default App
