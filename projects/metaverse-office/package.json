@@ -1,0 +1,11 @@
+{
+  "name": "metaverse-agent-platform",
+  "version": "3.0.0",
+  "description": "数字人元宇宙平台 - Agent协作协议版",
+  "author": "Blockchainbase",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Blockchainbase/metaverse-agent-platform.git"
+  }
+}
