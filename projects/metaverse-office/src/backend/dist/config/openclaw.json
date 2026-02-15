@@ -1,0 +1,41 @@
+{
+  "gateway": {
+    "url": "http://localhost:18789",
+    "token": ""
+  },
+  "agents": [
+    {
+      "id": "teaching-secretary",
+      "name": "AI教学秘书",
+      "type": "teaching",
+      "role": "operations",
+      "position": { "x": 0, "y": 0, "z": 5 }
+    },
+    {
+      "id": "project-manager",
+      "name": "AI项目管家",
+      "type": "project",
+      "role": "product",
+      "position": { "x": 8, "y": 0, "z": 8 }
+    },
+    {
+      "id": "research-assistant",
+      "name": "AI科研助手",
+      "type": "research",
+      "role": "cto",
+      "position": { "x": -8, "y": 0, "z": 8 }
+    }
+  ],
+  "syncInterval": 30000,
+  "dataSources": {
+    "feishu": {
+      "enabled": true,
+      "syncCalendar": true,
+      "syncTasks": true
+    },
+    "email": {
+      "enabled": false,
+      "checkInterval": 300000
+    }
+  }
+}

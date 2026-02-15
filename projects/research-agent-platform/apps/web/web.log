@@ -1,0 +1,290 @@
+
+> research-agent-platform-web@1.0.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 334 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+10:12:02 AM [vite] vite.config.ts changed, restarting server...
+Re-optimizing dependencies because vite config has changed
+10:12:02 AM [vite] server restarted.
+Error: The following dependencies are imported but could not be resolved:
+
+  @/stores/auth (imported by /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/components/Layout/Header.tsx)
+  @/components/Kanban/KanbanBoard (imported by /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Projects.tsx)
+
+Are they installed?
+    at file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:50669:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:50174:26
+10:12:47 AM [vite] Pre-transform error: Failed to resolve import "@/stores/auth" from "src/pages/Login.tsx". Does the file exist?
+10:12:48 AM [vite] Pre-transform error: Failed to resolve import "@/components/Kanban/KanbanBoard" from "src/pages/Projects.tsx". Does the file exist?
+10:12:48 AM [vite] Pre-transform error: Failed to resolve import "@/stores/auth" from "src/components/Layout/Header.tsx". Does the file exist?
+10:12:48 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/pages/Login.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Login.tsx:5:29
+  20 |  import { UserOutlined, LockOutlined, CodeOutlined } from "@ant-design/icons";
+  21 |  import { useNavigate } from "react-router-dom";
+  22 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  23 |  const { Title, Text } = Typography;
+  24 |  const Login = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:12:48 AM [vite] Internal server error: Failed to resolve import "@/components/Kanban/KanbanBoard" from "src/pages/Projects.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Projects.tsx:28:24
+  41 |    UnorderedListOutlined
+  42 |  } from "@ant-design/icons";
+  43 |  import KanbanBoard from "@/components/Kanban/KanbanBoard";
+     |                           ^
+  44 |  import dayjs from "dayjs";
+  45 |  const { Option } = Select;
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:12:49 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/components/Layout/Header.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/components/Layout/Header.tsx:9:29
+  24 |  } from "@ant-design/icons";
+  25 |  import { useNavigate } from "react-router-dom";
+  26 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  27 |  const { Header: AntHeader } = Layout;
+  28 |  const Header = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:36:43 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/pages/Login.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Login.tsx:5:29
+  20 |  import { UserOutlined, LockOutlined, CodeOutlined } from "@ant-design/icons";
+  21 |  import { useNavigate } from "react-router-dom";
+  22 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  23 |  const { Title, Text } = Typography;
+  24 |  const Login = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:36:43 AM [vite] Internal server error: Failed to resolve import "@/components/Kanban/KanbanBoard" from "src/pages/Projects.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Projects.tsx:28:24
+  41 |    UnorderedListOutlined
+  42 |  } from "@ant-design/icons";
+  43 |  import KanbanBoard from "@/components/Kanban/KanbanBoard";
+     |                           ^
+  44 |  import dayjs from "dayjs";
+  45 |  const { Option } = Select;
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:36:43 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/components/Layout/Header.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/components/Layout/Header.tsx:9:29
+  24 |  } from "@ant-design/icons";
+  25 |  import { useNavigate } from "react-router-dom";
+  26 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  27 |  const { Header: AntHeader } = Layout;
+  28 |  const Header = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:36:53 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/pages/Login.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Login.tsx:5:29
+  20 |  import { UserOutlined, LockOutlined, CodeOutlined } from "@ant-design/icons";
+  21 |  import { useNavigate } from "react-router-dom";
+  22 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  23 |  const { Title, Text } = Typography;
+  24 |  const Login = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:36:53 AM [vite] Internal server error: Failed to resolve import "@/components/Kanban/KanbanBoard" from "src/pages/Projects.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Projects.tsx:28:24
+  41 |    UnorderedListOutlined
+  42 |  } from "@ant-design/icons";
+  43 |  import KanbanBoard from "@/components/Kanban/KanbanBoard";
+     |                           ^
+  44 |  import dayjs from "dayjs";
+  45 |  const { Option } = Select;
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:36:53 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/components/Layout/Header.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/components/Layout/Header.tsx:9:29
+  24 |  } from "@ant-design/icons";
+  25 |  import { useNavigate } from "react-router-dom";
+  26 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  27 |  const { Header: AntHeader } = Layout;
+  28 |  const Header = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:50:38 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/pages/Login.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Login.tsx:5:29
+  20 |  import { UserOutlined, LockOutlined, CodeOutlined } from "@ant-design/icons";
+  21 |  import { useNavigate } from "react-router-dom";
+  22 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  23 |  const { Title, Text } = Typography;
+  24 |  const Login = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+10:50:38 AM [vite] Internal server error: Failed to resolve import "@/components/Kanban/KanbanBoard" from "src/pages/Projects.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Projects.tsx:28:24
+  41 |    UnorderedListOutlined
+  42 |  } from "@ant-design/icons";
+  43 |  import KanbanBoard from "@/components/Kanban/KanbanBoard";
+     |                           ^
+  44 |  import dayjs from "dayjs";
+  45 |  const { Option } = Select;
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+11:01:54 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/pages/Login.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Login.tsx:5:29
+  20 |  import { UserOutlined, LockOutlined, CodeOutlined } from "@ant-design/icons";
+  21 |  import { useNavigate } from "react-router-dom";
+  22 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  23 |  const { Title, Text } = Typography;
+  24 |  const Login = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+11:01:54 AM [vite] Internal server error: Failed to resolve import "@/components/Kanban/KanbanBoard" from "src/pages/Projects.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/pages/Projects.tsx:28:24
+  41 |    UnorderedListOutlined
+  42 |  } from "@ant-design/icons";
+  43 |  import KanbanBoard from "@/components/Kanban/KanbanBoard";
+     |                           ^
+  44 |  import dayjs from "dayjs";
+  45 |  const { Option } = Select;
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+11:01:54 AM [vite] Internal server error: Failed to resolve import "@/stores/auth" from "src/components/Layout/Header.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/apps/web/src/components/Layout/Header.tsx:9:29
+  24 |  } from "@ant-design/icons";
+  25 |  import { useNavigate } from "react-router-dom";
+  26 |  import { useAuthStore } from "@/stores/auth";
+     |                                ^
+  27 |  const { Header: AntHeader } = Layout;
+  28 |  const Header = () => {
+      at TransformPluginContext._formatError (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///Users/tomscomputer/.openclaw/workspace/projects/research-agent-platform/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)

@@ -1,0 +1,4 @@
+[INFO] 🚀 完整后端服务启动
+[INFO] 📡 HTTP API: http://localhost:9999
+[INFO] 🌐 WebSocket: ws://localhost:9999
+[INFO] 💾 Database: PostgreSQL

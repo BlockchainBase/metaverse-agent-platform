@@ -1,0 +1,489 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 用户与权限 ====================
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  name      String
+  password  String
+  avatar    String?
+  role      UserRole @default(MEMBER)
+  status    UserStatus @default(ACTIVE)
+  
+  // Agent绑定
+  agentId   String?  @unique
+  agent     Agent?   @relation(fields: [agentId], references: [id])
+  
+  // 关联
+  ownedCustomers Customer[]
+  managedProjects Project[] @relation("ProjectManager")
+  assignedTasks   Task[]
+  projectMembers  ProjectMember[]
+  activities      Activity[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN       // 超级管理员
+  DIRECTOR    // 院长/副院长
+  MANAGER     // 部门经理
+  MEMBER      // 普通成员
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// ==================== AI Agent ====================
+
+model Agent {
+  id          String    @id @default(uuid())
+  name        String
+  role        AgentRole
+  description String?
+  avatar      String?
+  
+  // Agent状态
+  status      AgentStatus @default(IDLE)
+  
+  // Agent能力配置
+  capabilities Json?
+  
+  // 关联
+  user        User?
+  activities  Activity[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum AgentRole {
+  MARKET      // 市场专员
+  SOLUTION    // 方案架构师
+  PROJECT     // 项目管家
+  DEVELOPER   // 开发工程师
+  DELIVERY    // 交付专家
+  FINANCE     // 财务助手
+  DIRECTOR    // 院长助理
+  DEVOPS      // 交互运维工程师
+}
+
+enum AgentStatus {
+  IDLE        // 空闲
+  WORKING     // 工作中
+  WAITING     // 等待真人确认
+  ERROR       // 异常
+}
+
+// ==================== 客户管理 ====================
+
+model Customer {
+  id          String   @id @default(uuid())
+  name        String
+  industry    String?  // 行业
+  scale       String?  // 规模
+  region      String?  // 地区
+  address     String?
+  website     String?
+  
+  // 客户分级
+  level       CustomerLevel @default(B)
+  status      CustomerStatus @default(POTENTIAL)
+  tags        String? // 标签（逗号分隔）
+  
+  // 负责人
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  
+  // 关联
+  contacts    Contact[]
+  projects    Project[]
+  communications Communication[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum CustomerLevel {
+  A
+  B
+  C
+}
+
+enum CustomerStatus {
+  POTENTIAL   // 潜在客户
+  ACTIVE      // 合作中
+  INACTIVE    // 暂停合作
+  LOST        // 流失
+}
+
+model Contact {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  name        String
+  position    String?  // 职位
+  phone       String?
+  email       String?
+  wechat      String?
+  isPrimary   Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+}
+
+// ==================== 项目管理 ====================
+
+model Project {
+  id          String   @id @default(uuid())
+  code        String   @unique // 项目编号 PJ2024001
+  name        String
+  
+  // 客户
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  
+  // 项目阶段
+  stage       ProjectStage @default(STAGE1)
+  stageStatus StageStatus @default(NOT_STARTED)
+  
+  // 项目信息
+  type        String?  // 项目类型
+  description String?
+  requirements String? @db.Text
+  
+  // 财务
+  budget      Float?      // 预算
+  contractAmount Float?   // 合同金额
+  
+  // 时间
+  startDate   DateTime?
+  endDate     DateTime?
+  actualStart DateTime?
+  actualEnd   DateTime?
+  
+  // 负责人
+  managerId   String
+  manager     User     @relation("ProjectManager", fields: [managerId], references: [id])
+  
+  // 状态
+  status      ProjectStatus @default(DRAFT)
+  priority    Priority @default(MEDIUM)
+  
+  // 关联
+  milestones  Milestone[]
+  tasks       Task[]
+  documents   Document[]
+  finances    ProjectFinance[]
+  activities  Activity[]
+  members     ProjectMember[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum ProjectStage {
+  STAGE1  // 市场对接
+  STAGE2  // 方案制定
+  STAGE3  // 研发Demo
+  STAGE4  // 实施交付
+}
+
+enum StageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum ProjectStatus {
+  DRAFT
+  ONGOING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  role      String   // 项目角色
+  joinDate  DateTime @default(now())
+  leaveDate DateTime?
+  
+  @@unique([projectId, userId])
+}
+
+model Milestone {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  name        String
+  stage       ProjectStage
+  
+  dueDate     DateTime?
+  completedAt DateTime?
+  
+  deliverables String? // 交付物清单
+  status      MilestoneStatus @default(PENDING)
+  
+  createdAt   DateTime @default(now())
+}
+
+enum MilestoneStatus {
+  PENDING
+  COMPLETED
+  DELAYED
+}
+
+// ==================== 任务管理 ====================
+
+model Task {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?  @db.Text
+  
+  // 负责人
+  assigneeId  String?
+  assignee    User?    @relation(fields: [assigneeId], references: [id])
+  
+  // 时间
+  startDate   DateTime?
+  dueDate     DateTime?
+  completedAt DateTime?
+  
+  // 状态
+  status      TaskStatus @default(TODO)
+  priority    Priority @default(MEDIUM)
+  
+  // 层级
+  parentId    String?
+  parent      Task?    @relation("TaskHierarchy", fields: [parentId], references: [id])
+  children    Task[]   @relation("TaskHierarchy")
+  
+  // 工时
+  estimatedHours Int?
+  actualHours    Int?
+  
+  // 关联
+  milestoneId String?
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+  CANCELLED
+}
+
+// ==================== 财务管理 ====================
+
+model ProjectFinance {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // 预算
+  totalBudget      Float
+  laborBudget      Float
+  outsourceBudget  Float
+  otherBudget      Float
+  
+  // 合同
+  contractAmount   Float
+  
+  // 版本管理
+  version     Int      @default(1)
+  isCurrent   Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  createdBy   String
+}
+
+model CostRecord {
+  id          String   @id @default(uuid())
+  projectId   String
+  
+  type        CostType
+  amount      Float  @db.Float(12, 2)
+  date        DateTime
+  description String?
+  
+  recordedBy  String
+  createdAt   DateTime @default(now())
+}
+
+enum CostType {
+  LABOR       // 人力成本
+  OUTSOURCE   // 外包成本
+  EXPENSE     // 费用报销
+  OTHER
+}
+
+model PaymentPlan {
+  id          String   @id @default(uuid())
+  projectId   String
+  
+  phase       String   // 阶段名称
+  percentage  Float  @db.Float(5, 2) // 占比
+  amount      Float  @db.Float(12, 2)
+  
+  plannedDate DateTime
+  actualDate  DateTime?
+  status      PaymentStatus @default(PENDING)
+  
+  createdAt   DateTime @default(now())
+}
+
+enum PaymentStatus {
+  PENDING     // 待收款
+  INVOICED    // 已开票
+  RECEIVED    // 已收款
+}
+
+// ==================== 文档管理 ====================
+
+model Document {
+  id          String   @id @default(uuid())
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  
+  name        String
+  type        DocumentType
+  
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
+  
+  version     Int      @default(1)
+  
+  uploaderId  String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum DocumentType {
+  REQUIREMENT   // 需求文档
+  SOLUTION      // 方案文档
+  CONTRACT      // 合同
+  DESIGN        // 设计稿
+  REPORT        // 报告
+  ACCEPTANCE    // 验收单
+  OTHER
+}
+
+// ==================== 沟通记录 ====================
+
+model Communication {
+  id          String   @id @default(uuid())
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  
+  type        CommunicationType
+  title       String
+  content     String?  @db.Text
+  
+  contactId   String?
+  contact     Contact? @relation(fields: [contactId], references: [id])
+  
+  participants String? // 内部参与人ID（逗号分隔）
+  
+  communicationDate DateTime
+  nextFollowUp      DateTime?
+  
+  createdBy   String
+  createdAt   DateTime @default(now())
+}
+
+enum CommunicationType {
+  PHONE
+  EMAIL
+  MEETING
+  VISIT
+  WECHAT
+  OTHER
+}
+
+// ==================== 活动日志（Agent行为） ====================
+
+model Activity {
+  id          String   @id @default(uuid())
+  
+  type        ActivityType
+  title       String
+  description String?  @db.Text
+  
+  // 关联
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id])
+  
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  agentId     String?
+  agent       Agent?   @relation(fields: [agentId], references: [id])
+  
+  // 元数据
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+}
+
+enum ActivityType {
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_STAGE_CHANGED
+  TASK_CREATED
+  TASK_COMPLETED
+  AGENT_ACTION
+  AGENT_DECISION
+  AGENT_ALERT
+  COMMUNICATION
+  FINANCE_UPDATED
+  MILESTONE_REACHED
+}
+
+// ==================== 系统配置 ====================
+
+model SystemConfig {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+  
+  updatedAt DateTime @updatedAt
+}

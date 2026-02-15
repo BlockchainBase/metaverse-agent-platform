@@ -1,0 +1,450 @@
+import { WebSocket, WebSocketServer } from 'ws';
+import { v4 as uuidv4 } from 'uuid';
+
+// OpenClaw连接信息
+interface OpenClawConnection {
+  id: string;
+  socket: WebSocket;
+  agentId: string;
+  agentName: string;
+  ownerName: string;
+  deviceInfo: {
+    deviceId: string;
+    hostName: string;
+    platform: string;
+  };
+  connectedAt: Date;
+  lastPing: Date;
+  status: 'online' | 'away' | 'busy';
+}
+
+// 消息类型
+interface CollaborationMessage {
+  id: string;
+  type: 'direct' | 'broadcast' | 'task' | 'request' | 'response';
+  from: {
+    agentId: string;
+    agentName: string;
+    ownerName: string;
+  };
+  to?: string; // 目标agentId，为空则广播
+  content: {
+    text?: string;
+    action?: string;
+    data?: any;
+  };
+  timestamp: Date;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  requiresResponse: boolean;
+  responseTimeout?: number; // 响应超时时间（秒）
+}
+
+// 任务协作
+interface CollaborationTask {
+  id: string;
+  title: string;
+  description: string;
+  assigner: string; // agentId
+  assignees: string[]; // agentIds
+  projectId?: string;
+  status: 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+  priority: 'low' | 'medium' | 'high';
+  createdAt: Date;
+  updatedAt: Date;
+  dueDate?: Date;
+  messages: CollaborationMessage[];
+}
+
+// OpenClaw协作网络管理器
+export class OpenClawNetwork {
+  private wss: WebSocketServer | null = null;
+  private connections: Map<string, OpenClawConnection> = new Map();
+  private messageHistory: CollaborationMessage[] = [];
+  private tasks: Map<string, CollaborationTask> = new Map();
+  private messageHandlers: Map<string, (message: CollaborationMessage) => void> = new Map();
+
+  // 初始化WebSocket服务器
+  initialize(port: number = 3003): void {
+    this.wss = new WebSocketServer({ port });
+    
+    console.log(`🌐 OpenClaw协作网络启动于端口 ${port}`);
+
+    this.wss.on('connection', (socket: WebSocket, req) => {
+      console.log(`📱 新设备连接: ${req.socket.remoteAddress}`);
+
+      // 等待身份验证消息
+      socket.once('message', (data) => {
+        try {
+          const authMessage = JSON.parse(data.toString());
+          
+          if (authMessage.type === 'auth') {
+            this.handleAuthentication(socket, authMessage.payload);
+          } else {
+            socket.close(1002, 'Authentication required');
+          }
+        } catch (error) {
+          socket.close(1002, 'Invalid message format');
+        }
+      });
+
+      // 处理断开连接
+      socket.on('close', () => {
+        this.handleDisconnection(socket);
+      });
+
+      // 处理错误
+      socket.on('error', (error) => {
+        console.error('WebSocket error:', error);
+      });
+    });
+
+    // 启动心跳检测
+    this.startHeartbeat();
+  }
+
+  // 处理身份验证
+  private handleAuthentication(socket: WebSocket, payload: any): void {
+    const { agentId, agentName, ownerName, deviceInfo } = payload;
+
+    if (!agentId || !agentName) {
+      socket.close(1002, 'Missing required fields');
+      return;
+    }
+
+    // 创建连接记录
+    const connection: OpenClawConnection = {
+      id: uuidv4(),
+      socket,
+      agentId,
+      agentName,
+      ownerName: ownerName || 'Unknown',
+      deviceInfo: deviceInfo || { deviceId: 'unknown', hostName: 'unknown', platform: 'unknown' },
+      connectedAt: new Date(),
+      lastPing: new Date(),
+      status: 'online'
+    };
+
+    this.connections.set(agentId, connection);
+
+    console.log(`✅ Agent已连接: ${agentName} (${ownerName})`);
+
+    // 发送连接成功消息
+    this.sendToSocket(socket, {
+      type: 'system',
+      payload: {
+        event: 'connected',
+        message: 'Welcome to OpenClaw Collaboration Network',
+        onlineAgents: this.getOnlineAgents()
+      }
+    });
+
+    // 广播新Agent上线
+    this.broadcast({
+      type: 'system',
+      payload: {
+        event: 'agent_online',
+        agentId,
+        agentName,
+        ownerName
+      }
+    }, agentId); // 不发送给自己
+
+    // 设置消息处理器
+    socket.on('message', (data) => {
+      this.handleMessage(agentId, data);
+    });
+  }
+
+  // 处理消息
+  private handleMessage(agentId: string, data: any): void {
+    try {
+      const message = JSON.parse(data.toString());
+      const connection = this.connections.get(agentId);
+
+      if (!connection) return;
+
+      switch (message.type) {
+        case 'ping':
+          connection.lastPing = new Date();
+          this.sendToSocket(connection.socket, { type: 'pong' });
+          break;
+
+        case 'status_update':
+          connection.status = message.payload.status;
+          this.broadcast({
+            type: 'system',
+            payload: {
+              event: 'status_changed',
+              agentId,
+              status: message.payload.status
+            }
+          });
+          break;
+
+        case 'collaboration_message':
+          this.handleCollaborationMessage(agentId, message.payload);
+          break;
+
+        case 'task_create':
+          this.handleTaskCreate(agentId, message.payload);
+          break;
+
+        case 'task_update':
+          this.handleTaskUpdate(agentId, message.payload);
+          break;
+
+        case 'broadcast':
+          this.broadcast({
+            type: 'broadcast',
+            from: {
+              agentId: connection.agentId,
+              agentName: connection.agentName,
+              ownerName: connection.ownerName
+            },
+            content: message.payload
+          });
+          break;
+
+        default:
+          console.log(`Unknown message type: ${message.type}`);
+      }
+    } catch (error) {
+      console.error('Error handling message:', error);
+    }
+  }
+
+  // 处理协作消息
+  private handleCollaborationMessage(fromAgentId: string, payload: any): void {
+    const connection = this.connections.get(fromAgentId);
+    if (!connection) return;
+
+    const message: CollaborationMessage = {
+      id: uuidv4(),
+      type: payload.type || 'direct',
+      from: {
+        agentId: connection.agentId,
+        agentName: connection.agentName,
+        ownerName: connection.ownerName
+      },
+      to: payload.to,
+      content: payload.content,
+      timestamp: new Date(),
+      priority: payload.priority || 'normal',
+      requiresResponse: payload.requiresResponse || false,
+      responseTimeout: payload.responseTimeout
+    };
+
+    // 保存消息历史
+    this.messageHistory.push(message);
+    if (this.messageHistory.length > 1000) {
+      this.messageHistory.shift(); // 限制历史记录数量
+    }
+
+    // 发送消息
+    if (message.to) {
+      // 直接消息
+      const targetConnection = this.connections.get(message.to);
+      if (targetConnection) {
+        this.sendToSocket(targetConnection.socket, {
+          type: 'collaboration_message',
+          payload: message
+        });
+        
+        // 通知发送者消息已送达
+        this.sendToSocket(connection.socket, {
+          type: 'message_delivered',
+          payload: { messageId: message.id, to: message.to }
+        });
+      } else {
+        // 目标不在线
+        this.sendToSocket(connection.socket, {
+          type: 'message_failed',
+          payload: { messageId: message.id, reason: 'Agent offline' }
+        });
+      }
+    } else {
+      // 广播消息
+      this.broadcast({
+        type: 'collaboration_message',
+        payload: message
+      }, fromAgentId);
+    }
+
+    // 触发回调
+    const handler = this.messageHandlers.get(message.type);
+    if (handler) {
+      handler(message);
+    }
+  }
+
+  // 处理任务创建
+  private handleTaskCreate(assignerId: string, payload: any): void {
+    const connection = this.connections.get(assignerId);
+    if (!connection) return;
+
+    const task: CollaborationTask = {
+      id: uuidv4(),
+      title: payload.title,
+      description: payload.description,
+      assigner: assignerId,
+      assignees: payload.assignees || [],
+      projectId: payload.projectId,
+      status: 'pending',
+      priority: payload.priority || 'medium',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      dueDate: payload.dueDate ? new Date(payload.dueDate) : undefined,
+      messages: []
+    };
+
+    this.tasks.set(task.id, task);
+
+    // 通知任务创建者
+    this.sendToSocket(connection.socket, {
+      type: 'task_created',
+      payload: { taskId: task.id, task }
+    });
+
+    // 通知被分配者
+    task.assignees.forEach(assigneeId => {
+      const assigneeConnection = this.connections.get(assigneeId);
+      if (assigneeConnection) {
+        this.sendToSocket(assigneeConnection.socket, {
+          type: 'task_assigned',
+          payload: { taskId: task.id, task, from: connection.agentName }
+        });
+      }
+    });
+  }
+
+  // 处理任务更新
+  private handleTaskUpdate(agentId: string, payload: any): void {
+    const task = this.tasks.get(payload.taskId);
+    if (!task) return;
+
+    const connection = this.connections.get(agentId);
+    if (!connection) return;
+
+    // 更新任务
+    if (payload.status) task.status = payload.status;
+    if (payload.assignees) task.assignees = payload.assignees;
+    task.updatedAt = new Date();
+
+    // 通知相关人员
+    const relatedAgents = new Set([task.assigner, ...task.assignees]);
+    relatedAgents.forEach(relatedId => {
+      if (relatedId === agentId) return; // 不通知自己
+      
+      const relatedConnection = this.connections.get(relatedId);
+      if (relatedConnection) {
+        this.sendToSocket(relatedConnection.socket, {
+          type: 'task_updated',
+          payload: { taskId: task.id, task, updatedBy: connection.agentName }
+        });
+      }
+    });
+  }
+
+  // 广播消息
+  private broadcast(message: any, excludeAgentId?: string): void {
+    this.connections.forEach((connection, agentId) => {
+      if (excludeAgentId && agentId === excludeAgentId) return;
+      
+      if (connection.socket.readyState === WebSocket.OPEN) {
+        this.sendToSocket(connection.socket, message);
+      }
+    });
+  }
+
+  // 发送消息到指定socket
+  private sendToSocket(socket: WebSocket, message: any): void {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(message));
+    }
+  }
+
+  // 处理断开连接
+  private handleDisconnection(socket: WebSocket): void {
+    for (const [agentId, connection] of this.connections.entries()) {
+      if (connection.socket === socket) {
+        console.log(`❌ Agent已断开: ${connection.agentName}`);
+        
+        this.connections.delete(agentId);
+        
+        // 广播Agent离线
+        this.broadcast({
+          type: 'system',
+          payload: {
+            event: 'agent_offline',
+            agentId,
+            agentName: connection.agentName
+          }
+        });
+        
+        break;
+      }
+    }
+  }
+
+  // 启动心跳检测
+  private startHeartbeat(): void {
+    setInterval(() => {
+      const now = new Date();
+      const timeout = 60000; // 60秒超时
+
+      this.connections.forEach((connection, agentId) => {
+        if (now.getTime() - connection.lastPing.getTime() > timeout) {
+          console.log(`⏱️ Agent超时: ${connection.agentName}`);
+          connection.socket.close();
+          this.connections.delete(agentId);
+        }
+      });
+    }, 30000); // 每30秒检查一次
+  }
+
+  // 获取在线Agent列表
+  getOnlineAgents(): Array<{ agentId: string; agentName: string; ownerName: string; status: string }> {
+    return Array.from(this.connections.values()).map(conn => ({
+      agentId: conn.agentId,
+      agentName: conn.agentName,
+      ownerName: conn.ownerName,
+      status: conn.status
+    }));
+  }
+
+  // 获取消息历史
+  getMessageHistory(limit: number = 100): CollaborationMessage[] {
+    return this.messageHistory.slice(-limit);
+  }
+
+  // 获取任务列表
+  getTasks(agentId?: string): CollaborationTask[] {
+    const tasks = Array.from(this.tasks.values());
+    
+    if (agentId) {
+      return tasks.filter(task => 
+        task.assigner === agentId || task.assignees.includes(agentId)
+      );
+    }
+    
+    return tasks;
+  }
+
+  // 注册消息处理器
+  onMessage(type: string, handler: (message: CollaborationMessage) => void): void {
+    this.messageHandlers.set(type, handler);
+  }
+
+  // 向特定Agent发送消息
+  sendToAgent(agentId: string, message: any): boolean {
+    const connection = this.connections.get(agentId);
+    if (connection && connection.socket.readyState === WebSocket.OPEN) {
+      this.sendToSocket(connection.socket, message);
+      return true;
+    }
+    return false;
+  }
+}
+
+// 导出单例
+export const openClawNetwork = new OpenClawNetwork();

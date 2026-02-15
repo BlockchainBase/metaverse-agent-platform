@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: metaverse-platform
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/metaverse_platform?schema=public
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-refresh-secret-key}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./certs:/app/certs
+    restart: unless-stopped
+    networks:
+      - metaverse-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: metaverse-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=metaverse_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - metaverse-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: metaverse-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - metaverse-network
+
+volumes:
+  postgres_data:
+
+networks:
+  metaverse-network:
+    driver: bridge

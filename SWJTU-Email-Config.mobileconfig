@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>EmailAccountDescription</key>
+            <string>西南交通大学邮箱</string>
+            <key>EmailAccountName</key>
+            <string>赵其刚</string>
+            <key>EmailAccountType</key>
+            <string>EmailTypeIMAP</string>
+            <key>EmailAddress</key>
+            <string>qgzhao@mail.swjtu.edu.cn</string>
+            <key>IncomingMailServerAuthentication</key>
+            <string>EmailAuthPassword</string>
+            <key>IncomingMailServerHostName</key>
+            <string>mail.swjtu.edu.cn</string>
+            <key>IncomingMailServerPortNumber</key>
+            <integer>993</integer>
+            <key>IncomingMailServerUseSSL</key>
+            <true/>
+            <key>IncomingMailServerUsername</key>
+            <string>qgzhao</string>
+            <key>OutgoingMailServerAuthentication</key>
+            <string>EmailAuthPassword</string>
+            <key>OutgoingMailServerHostName</key>
+            <string>mail.swjtu.edu.cn</string>
+            <key>OutgoingMailServerPortNumber</key>
+            <integer>465</integer>
+            <key>OutgoingMailServerUseSSL</key>
+            <true/>
+            <key>OutgoingMailServerUsername</key>
+            <string>qgzhao</string>
+            <key>OutgoingPasswordSameAsIncomingPassword</key>
+            <true/>
+            <key>PayloadDescription</key>
+            <string>配置西南交通大学邮箱账户</string>
+            <key>PayloadDisplayName</key>
+            <string>SWJTU 邮箱</string>
+            <key>PayloadIdentifier</key>
+            <string>com.swjtu.email.qgzhao</string>
+            <key>PayloadType</key>
+            <string>com.apple.mail.managed</string>
+            <key>PayloadUUID</key>
+            <string>A1B2C3D4-E5F6-7890-ABCD-EF1234567890</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>SMIMEEnabled</key>
+            <false/>
+        </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>西南交通大学邮箱配置</string>
+    <key>PayloadDisplayName</key>
+    <string>SWJTU 邮箱配置</string>
+    <key>PayloadIdentifier</key>
+    <string>com.swjtu.email.config</string>
+    <key>PayloadRemovalDisallowed</key>
+    <false/>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>12345678-1234-1234-1234-123456789012</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>

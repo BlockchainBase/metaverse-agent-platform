@@ -1,0 +1,618 @@
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Stars, PerspectiveCamera } from '@react-three/drei'
+import { ChineseCourtyard } from './components/Courtyard'
+import { RealisticAgent } from './components/RealisticAgent'
+import { Dashboards } from './components/Dashboards'
+import { OfficeDecorations } from './components/OfficeDecorations'
+import { AgentChatSystem } from './components/ChatBubble'
+import { InteractionFeedback } from './components/InteractionFeedback'
+import { EnvironmentController, WeatherType } from './components/EnvironmentController'
+import { metaverseDataService, AgentState } from './services/metaverseData'
+import { AGENTS_DATA, AgentRole, STATUS_CONFIG } from './data/agents'
+import { FirstPersonController } from './components/FirstPersonController'
+import { MeetingRoom3D } from './components/MeetingRoom3D'
+import { CollaborationLines, CollaborationHub } from './components/CollaborationLines'
+import { ConnectionIndicator } from './components/ConnectionStatus'
+import { AgentSidebar } from './components/AgentSidebar'
+import { DepartmentRooms, DEPARTMENT_INFO } from './components/DepartmentRooms'
+import { DepartmentTaskBoards } from './components/DepartmentTaskBoard'
+import './App.css'
+
+// AI角色位置配置（基于业务阶段）- 7个Agent（运维已合并到交付）
+const AGENT_POSITIONS: Record<AgentRole, [number, number, number]> = {
+  market: [-15, 0, 10],      // 阶段1: 市场对接
+  solution: [-5, 0, 5],      // 阶段2: 方案制定
+  project: [0, 0, 0],        // 中心: 项目管家
+  developer: [5, 0, 0],      // 阶段3: 研发Demo
+  delivery: [15, 0, -5],     // 阶段4: 实施交付（含运维）
+  finance: [5, 0, -5],       // 账房
+  director: [0, 5, -15],     // 正堂高位
+}
+
+// 角色详情弹窗
+function AgentModal({ 
+  role, 
+  onClose,
+  onlineAgents
+}: { 
+  role: AgentRole
+  onClose: () => void
+  onlineAgents: string[]
+}) {
+  const agent = AGENTS_DATA[role]
+  const status = STATUS_CONFIG[agent.status]
+  const isOnline = onlineAgents.includes(role)
+  
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        
+        {/* 头部 */}
+        <div className="modal-header" style={{ backgroundColor: agent.color }}>
+          <div className="modal-icon">{agent.emoji}</div>
+          <div className="modal-title">
+            <h2>{agent.name}</h2>
+            <p>{agent.title} | {agent.department}</p>
+            <span className="status-badge" style={{ backgroundColor: status.bgColor, color: status.color }}>
+              {isOnline ? '🟢' : '⚪'} {status.label}
+            </span>
+          </div>
+        </div>
+        
+        {/* 内容 */}
+        <div className="modal-body">
+          {/* OpenClaw设备信息 */}
+          <div className="modal-section device-info">
+            <h3>🔌 OpenClaw设备</h3>
+            <p><strong>所属真人:</strong> {agent.ownerName}</p>
+            <p><strong>联系邮箱:</strong> {agent.ownerEmail}</p>
+            <p><strong>设备状态:</strong> {isOnline ? '🟢 在线' : '⚪ 离线'}</p>
+          </div>
+          
+          {/* 简介 */}
+          <div className="modal-section">
+            <h3>📋 角色简介</h3>
+            <p>{agent.description}</p>
+          </div>
+          
+          {/* 当前任务 */}
+          <div className="modal-section highlight">
+            <h3>🎯 当前任务</h3>
+            <p className="current-task">{agent.currentTask}</p>
+          </div>
+          
+          {/* 能力清单 */}
+          <div className="modal-section">
+            <h3>💪 能力清单</h3>
+            <ul>
+              {agent.capabilities.map((item: string, i: number) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* 技能 */}
+          <div className="modal-section">
+            <h3>💡 核心技能</h3>
+            <div className="skills-grid">
+              {agent.skills.map((skill, i) => (
+                <span key={i} className="skill-tag">{skill}</span>
+              ))}
+            </div>
+          </div>
+          
+          {/* 统计 */}
+          <div className="modal-section stats">
+            <h3>📊 工作统计</h3>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-value">{agent.stats.tasksCompleted}</span>
+                <span className="stat-label">已完成任务</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{agent.stats.tasksPending}</span>
+                <span className="stat-label">待处理任务</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{agent.stats.collaborationScore}</span>
+                <span className="stat-label">协作评分</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-value">{agent.stats.responseTime}min</span>
+                <span className="stat-label">平均响应</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 顶部信息面板
+function InfoPanel() {
+  return (
+    <div className="info-panel" style={{ left: '300px' }}>
+      <div className="info-title">
+        <span className="info-icon">🏛️</span>
+        <div>
+          <h1>研究院AI Agent协作平台</h1>
+          <p>8个OpenClaw数字员工自主协作</p>
+        </div>
+      </div>
+      
+      <div className="stage-legend">
+        <div className="stage-item">
+          <span className="stage-dot" style={{ background: '#3B82F6' }}></span>
+          <span>阶段1: 市场对接</span>
+        </div>
+        <div className="stage-item">
+          <span className="stage-dot" style={{ background: '#F59E0B' }}></span>
+          <span>阶段2: 方案制定</span>
+        </div>
+        <div className="stage-item">
+          <span className="stage-dot" style={{ background: '#EF4444' }}></span>
+          <span>阶段3: 研发Demo</span>
+        </div>
+        <div className="stage-item">
+          <span className="stage-dot" style={{ background: '#10B981' }}></span>
+          <span>阶段4: 实施交付</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// 会议室列表
+const MEETING_ROOMS = [
+  {
+    id: 'project-sync',
+    name: '项目同步会',
+    topic: '智慧校园项目进度同步',
+    participants: ['director', 'project', 'solution', 'developer'] as AgentRole[]
+  },
+  {
+    id: 'tech-review',
+    name: '技术评审会',
+    topic: '系统架构技术评审',
+    participants: ['solution', 'developer', 'devops', 'project'] as AgentRole[]
+  },
+  {
+    id: 'client-demo',
+    name: '客户演示会',
+    topic: '产品功能演示与答疑',
+    participants: ['market', 'solution', 'developer', 'director'] as AgentRole[]
+  },
+  {
+    id: 'finance-review',
+    name: '财务复盘会',
+    topic: '项目成本与预算分析',
+    participants: ['finance', 'project', 'director', 'delivery'] as AgentRole[]
+  }
+]
+
+// 右侧操作菜单面板
+function RightSideMenu({
+  onViewModeChange,
+  onEnterMeetingRoom,
+  viewMode,
+  currentMeetingRoom
+}: {
+  onViewModeChange: (mode: 'orbit' | 'first-person') => void
+  onEnterMeetingRoom: (roomId: string | null) => void
+  viewMode: 'orbit' | 'first-person'
+  currentMeetingRoom: string | null
+}) {
+  return (
+    <div style={{
+      position: 'absolute',
+      right: '20px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      background: 'rgba(255, 255, 255, 0.95)',
+      borderRadius: '16px',
+      padding: '20px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      zIndex: 1000,
+      minWidth: '180px',
+      maxHeight: '80vh',
+      overflowY: 'auto'
+    }}>
+      <h4 style={{
+        margin: '0 0 8px 0',
+        fontSize: '16px',
+        color: '#333',
+        borderBottom: '2px solid #e0e0e0',
+        paddingBottom: '10px',
+        textAlign: 'center'
+      }}>
+        🎮 功能菜单
+      </h4>
+      
+      <button
+        onClick={() => onViewModeChange('orbit')}
+        style={{
+          padding: '12px 16px',
+          borderRadius: '10px',
+          border: 'none',
+          background: viewMode === 'orbit' ? '#4A90E2' : '#f0f0f0',
+          color: viewMode === 'orbit' ? 'white' : '#333',
+          cursor: 'pointer',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s'
+        }}
+      >
+        🎥 环绕视角
+      </button>
+      
+      <button
+        onClick={() => onViewModeChange('first-person')}
+        style={{
+          padding: '12px 16px',
+          borderRadius: '10px',
+          border: 'none',
+          background: viewMode === 'first-person' ? '#4A90E2' : '#f0f0f0',
+          color: viewMode === 'first-person' ? 'white' : '#333',
+          cursor: 'pointer',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          transition: 'all 0.2s'
+        }}
+      >
+        🚶 漫游模式
+      </button>
+      
+      <div style={{ height: '1px', background: '#e0e0e0', margin: '8px 0' }} />
+      
+      <h4 style={{
+        margin: '0',
+        fontSize: '14px',
+        color: '#333',
+        textAlign: 'center'
+      }}>
+        🏢 会议室列表
+      </h4>
+      
+      {MEETING_ROOMS.map(room => (
+        <button
+          key={room.id}
+          onClick={() => onEnterMeetingRoom(currentMeetingRoom === room.id ? null : room.id)}
+          style={{
+            padding: '10px 12px',
+            borderRadius: '8px',
+            border: '2px solid ' + (currentMeetingRoom === room.id ? '#4A90E2' : '#e0e0e0'),
+            background: currentMeetingRoom === room.id ? '#4A90E2' : 'white',
+            color: currentMeetingRoom === room.id ? 'white' : '#333',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: currentMeetingRoom === room.id ? 'bold' : 'normal',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '4px',
+            transition: 'all 0.2s',
+            textAlign: 'left'
+          }}
+        >
+          <span>{currentMeetingRoom === room.id ? '🔴 ' : '⚪ '}{room.name}</span>
+          <span style={{
+            fontSize: '11px',
+            opacity: 0.8,
+            fontWeight: 'normal'
+          }}>
+            {room.topic}
+          </span>
+        </button>
+      ))}
+      
+      {currentMeetingRoom && (
+        <button
+          onClick={() => onEnterMeetingRoom(null)}
+          style={{
+            padding: '10px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: '#EF4444',
+            color: 'white',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            marginTop: '8px'
+          }}
+        >
+          ❌ 退出会议室
+        </button>
+      )}
+      
+      <div style={{
+        marginTop: '8px',
+        padding: '10px',
+        background: '#f8f9fa',
+        borderRadius: '8px',
+        fontSize: '11px',
+        color: '#666',
+        lineHeight: '1.5'
+      }}>
+        <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#333' }}>💡 操作提示：</div>
+        <div>• 点击会议室进入</div>
+        <div>• 漫游：WASD移动</div>
+        <div>• 鼠标控制视角</div>
+      </div>
+    </div>
+  )
+}
+
+// 底部控制面板
+function ControlPanel({ 
+  selectedRole, 
+  onWeatherChange
+}: {
+  selectedRole: AgentRole | null
+  onWeatherChange: (weather: WeatherType) => void
+}) {
+  return (
+    <div className="control-panel" style={{ left: '300px' }}>
+      <div className="control-buttons">
+        <button className="control-btn" onClick={() => onWeatherChange('day')}>
+          ☀️ 白天
+        </button>
+        <button className="control-btn" onClick={() => onWeatherChange('night')}>
+          🌙 夜晚
+        </button>
+      </div>
+      
+      {selectedRole && (
+        <div className="selected-info">
+          已选择: <strong>{AGENTS_DATA[selectedRole].name}</strong>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 部门信息弹窗
+function DepartmentModal({ 
+  deptKey, 
+  onClose 
+}: { 
+  deptKey: string
+  onClose: () => void
+}) {
+  const info = DEPARTMENT_INFO[deptKey]
+  if (!info) return null
+  
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        
+        <div className="modal-header" style={{ background: '#4A90E2' }}>
+          <h2>{info.name}</h2>
+          <p>{info.stage}</p>
+        </div>
+        
+        <div className="modal-body">
+          <div className="modal-section">
+            <h3>📋 部门职责</h3>
+            <p>{info.description}</p>
+          </div>
+          
+          <div className="modal-section">
+            <h3>📌 主要工作</h3>
+            <ul>
+              {info.responsibilities.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+          
+          <div className="modal-section stats">
+            <h3>📊 关键指标</h3>
+            <div className="stats-grid">
+              {info.keyMetrics.map((metric, i) => (
+                <div key={i} className="stat-item">
+                  <span className="stat-value">{metric.value}</span>
+                  <span className="stat-label">{metric.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  const [selectedRole, setSelectedRole] = useState<AgentRole | null>(null)
+  const [selectedDept, setSelectedDept] = useState<string | null>(null)
+  const [weather, setWeather] = useState<WeatherType>('day')
+  const [viewMode, setViewMode] = useState<'orbit' | 'first-person'>('orbit')
+  const [currentMeetingRoom, setCurrentMeetingRoom] = useState<string | null>(null)
+  const [onlineAgents, setOnlineAgents] = useState<string[]>(['market', 'solution', 'project', 'developer'])
+  const [agentStates, setAgentStates] = useState<Record<AgentRole, AgentState>>(() => {
+    const initial: Record<string, AgentState> = {}
+    Object.keys(AGENTS_DATA).forEach(role => {
+      initial[role] = {
+        status: AGENTS_DATA[role as AgentRole].status,
+        currentTask: AGENTS_DATA[role as AgentRole].currentTask,
+        lastActive: new Date().toISOString()
+      }
+    })
+    return initial as Record<AgentRole, AgentState>
+  })
+
+  // 监听角色点击
+  const handleAgentClick = useCallback((role: AgentRole) => {
+    setSelectedRole(role)
+    metaverseDataService.triggerInteraction(role, 'click')
+  }, [])
+
+  // 关闭弹窗
+  const handleCloseModal = useCallback(() => {
+    setSelectedRole(null)
+  }, [])
+
+  // 切换天气
+  const handleWeatherChange = useCallback((newWeather: WeatherType) => {
+    setWeather(newWeather)
+  }, [])
+
+  // 切换视角模式
+  const handleViewModeChange = useCallback((mode: 'orbit' | 'first-person') => {
+    setViewMode(mode)
+  }, [])
+
+  // 进入/退出会议室
+  const handleEnterMeetingRoom = useCallback((roomId: string | null) => {
+    setCurrentMeetingRoom(roomId)
+  }, [])
+
+  // 点击部门
+  const handleDepartmentClick = useCallback((deptKey: string) => {
+    setSelectedDept(deptKey)
+  }, [])
+
+  // 关闭部门弹窗
+  const handleCloseDeptModal = useCallback(() => {
+    setSelectedDept(null)
+  }, [])
+
+  return (
+    <div className="app">
+      {/* 左侧Agent列表 */}
+      <AgentSidebar 
+        selectedRole={selectedRole}
+        onSelectRole={handleAgentClick}
+        onlineAgents={onlineAgents}
+      />
+
+      {/* 3D场景 */}
+      {currentMeetingRoom ? (
+        // 会议室独立场景
+        <MeetingRoom3D 
+          roomId={currentMeetingRoom}
+          onClose={() => setCurrentMeetingRoom(null)}
+        />
+      ) : (
+        // 四合院场景
+        <Canvas
+          camera={{ position: [0, 15, 30], fov: 60 }}
+          style={{ width: '100vw', height: '100vh' }}
+        >
+          <EnvironmentController weather={weather} />
+          
+          {viewMode === 'orbit' ? (
+            <OrbitControls 
+              enablePan={true} 
+              enableZoom={true} 
+              enableRotate={true}
+              maxPolarAngle={Math.PI / 2 - 0.1}
+              minDistance={10}
+              maxDistance={60}
+            />
+          ) : (
+            <FirstPersonController 
+              enabled={true}
+              onEnterMeetingRoom={() => handleEnterMeetingRoom('project-sync')}
+            />
+          )}
+          
+          {/* 星空背景 */}
+          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+          
+          {/* 光照 */}
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[10, 20, 10]} intensity={1} castShadow />
+          
+          {/* 四合院场景 */}
+          <ChineseCourtyard />
+          
+          {/* 四阶段部门房间 */}
+          <DepartmentRooms onDepartmentClick={handleDepartmentClick} />
+          
+          {/* 办公室装饰 */}
+          <OfficeDecorations />
+          
+          {/* 8个AI Agent - 使用类真人形象 */}
+          {(Object.keys(AGENTS_DATA) as AgentRole[]).map((role) => (
+            <RealisticAgent
+              key={role}
+              role={role}
+              position={AGENT_POSITIONS[role]}
+              onClick={() => handleAgentClick(role)}
+              isSelected={selectedRole === role}
+            />
+          ))}
+          
+          {/* 协作连线 */}
+          <CollaborationLines />
+          
+          {/* 协作中心 */}
+          <CollaborationHub />
+          
+          {/* 数据看板 */}
+          <Dashboards />
+          
+          {/* 部门任务看板 - 暂时禁用测试 */}
+          {/* <DepartmentTaskBoards /> */}
+          
+          {/* 聊天系统 */}
+          <AgentChatSystem />
+        </Canvas>
+      )}
+      
+      {/* UI界面 */}
+      <InfoPanel />
+      
+      <ConnectionIndicator />
+      
+      <ControlPanel 
+        selectedRole={selectedRole}
+        onWeatherChange={handleWeatherChange}
+      />
+      
+      {/* 右侧功能菜单 */}
+      <RightSideMenu
+        onViewModeChange={handleViewModeChange}
+        onEnterMeetingRoom={handleEnterMeetingRoom}
+        viewMode={viewMode}
+        currentMeetingRoom={currentMeetingRoom}
+      />
+      
+      {/* 角色详情弹窗 */}
+      {selectedRole && (
+        <AgentModal 
+          role={selectedRole} 
+          onClose={handleCloseModal}
+          onlineAgents={onlineAgents}
+        />
+      )}
+      
+      {/* 部门信息弹窗 */}
+      {selectedDept && (
+        <DepartmentModal 
+          deptKey={selectedDept}
+          onClose={handleCloseDeptModal}
+        />
+      )}
+      
+      {/* 交互反馈 */}
+      <InteractionFeedback />
+    </div>
+  )
+}
+
+export default App

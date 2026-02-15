@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: rap-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: research_agent_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: rap-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # Backend API Server
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: rap-server
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/research_agent_platform?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - FEISHU_APP_ID=${FEISHU_APP_ID}
+      - FEISHU_APP_SECRET=${FEISHU_APP_SECRET}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # Frontend Web App
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: rap-web
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  # Metaverse 3D App
+  metaverse:
+    build:
+      context: ./apps/metaverse
+      dockerfile: Dockerfile
+    container_name: rap-metaverse
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+    ports:
+      - "3002:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

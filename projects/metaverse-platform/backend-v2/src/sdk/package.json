@@ -1,0 +1,33 @@
+{
+  "name": "@metaverse/agent-sdk",
+  "version": "2.0.0",
+  "description": "数字人元宇宙平台 Agent SDK - 提供认证、任务管理、会议参与等功能封装",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "keywords": [
+    "metaverse",
+    "agent",
+    "sdk",
+    "collaboration",
+    "3d",
+    "websocket"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "socket.io-client": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "socket.io-client": "^4.7.0"
+  }
+}

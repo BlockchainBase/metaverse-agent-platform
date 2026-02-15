@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>赵子龙传 - 动作游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+        }
+        #game-container {
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+        .loading {
+            color: #fff;
+            text-align: center;
+        }
+        .loading h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="loading">
+            <h1>🏇 赵子龙传</h1>
+            <p>正在加载...</p>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <!-- 游戏场景 -->
+    <script src="src/scenes/BootScene.js"></script>
+    <script src="src/scenes/MenuScene.js"></script>
+    <script src="src/scenes/GameScene.js"></script>
+    <script src="src/scenes/GameOverScene.js"></script>
+    <script src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "zhaozilong-game",
+  "version": "1.0.0",
+  "description": "赵子龙动作游戏 - 横版过关",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "dependencies": {
+    "phaser": "^3.70.0"
+  }
+}

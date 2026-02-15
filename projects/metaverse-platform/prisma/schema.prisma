@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Agent 实体 - 代表数字人/代理
+model Agent {
+  id          String    @id @default(uuid())
+  agentId     String    @unique @map("agent_id")
+  name        String
+  description String?
+  avatarUrl   String?   @map("avatar_url")
+  status      AgentStatus @default(OFFLINE)
+  
+  // mTLS 证书指纹
+  certFingerprint String? @map("cert_fingerprint")
+  
+  // 认证相关
+  passwordHash    String? @map("password_hash")
+  lastLoginAt     DateTime? @map("last_login_at")
+  loginAttempts   Int     @default(0) @map("login_attempts")
+  lockedUntil     DateTime? @map("locked_until")
+  
+  // 元数据
+  metadata    Json?     @default("{}")
+  
+  // 时间戳
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  // 关联
+  sessions    AgentSession[]
+  tasks       Task[]
+  heartbeats  Heartbeat[]
+  
+  @@index([status])
+  @@index([agentId])
+  @@map("agents")
+}
+
+// Agent 会话 - 管理登录会话
+model AgentSession {
+  id           String    @id @default(uuid())
+  agentId      String    @map("agent_id")
+  token        String    @unique
+  refreshToken String?   @map("refresh_token")
+  
+  // 会话元数据
+  ipAddress    String?   @map("ip_address")
+  userAgent    String?   @map("user_agent")
+  
+  // 状态
+  isValid      Boolean   @default(true) @map("is_valid")
+  expiresAt    DateTime  @map("expires_at")
+  
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  
+  // 关联
+  agent        Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  @@index([agentId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("agent_sessions")
+}
+
+// 任务调度实体
+model Task {
+  id          String    @id @default(uuid())
+  taskId      String    @unique @map("task_id")
+  
+  // 任务信息
+  name        String
+  description String?
+  type        TaskType
+  status      TaskStatus @default(PENDING)
+  priority    Int       @default(5) // 1-10, 10最高
+  
+  // 执行相关
+  agentId     String?   @map("agent_id")
+  scheduledAt DateTime? @map("scheduled_at")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  
+  // 任务数据
+  payload     Json?     @default("{}")
+  result      Json?     @default("{}")
+  error       String?
+  
+  // 重试机制
+  maxRetries  Int       @default(3) @map("max_retries")
+  retryCount  Int       @default(0) @map("retry_count")
+  
+  // 元数据
+  metadata    Json?     @default("{}")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  // 关联
+  agent       Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  
+  @@index([status])
+  @@index([agentId])
+  @@index([scheduledAt])
+  @@index([taskId])
+  @@map("tasks")
+}
+
+// 心跳记录
+model Heartbeat {
+  id          String    @id @default(uuid())
+  agentId     String    @map("agent_id")
+  
+  // 心跳数据
+  status      AgentStatus
+  timestamp   DateTime  @default(now())
+  
+  // 系统信息
+  cpuUsage    Float?    @map("cpu_usage")
+  memoryUsage Float?    @map("memory_usage")
+  networkLatency Float? @map("network_latency")
+  
+  // 位置信息（如果是3D虚拟空间）
+  positionX   Float?    @map("position_x")
+  positionY   Float?    @map("position_y")
+  positionZ   Float?    @map("position_z")
+  
+  // 元数据
+  metadata    Json?     @default("{}")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  // 关联
+  agent       Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  @@index([agentId])
+  @@index([timestamp])
+  @@index([status])
+  @@map("heartbeats")
+}
+
+// 系统配置
+model SystemConfig {
+  id          String    @id @default(uuid())
+  key         String    @unique
+  value       String
+  description String?
+  category    String    @default("general")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  @@index([key])
+  @@index([category])
+  @@map("system_configs")
+}
+
+// 枚举定义
+enum AgentStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+  AWAY
+  ERROR
+}
+
+enum TaskType {
+  CHAT
+  ACTION
+  NAVIGATION
+  CUSTOM
+  SYSTEM
+}
+
+enum TaskStatus {
+  PENDING
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  RETRYING
+}

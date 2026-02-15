@@ -1,0 +1,16 @@
+{
+  "lastChecks": {
+    "email": null,
+    "calendar": 1770862800,
+    "heartbeat": 1770896810,
+    "industryNews": null
+  },
+  "cronJobs": {
+    "dailyReport09": "60e80997-b9c5-432b-a0da-7f3f4f24bcd3",
+    "dailyReport12": "ed82b687-65bb-4314-baff-ad871ec1220d",
+    "dailyReport18": "10886e54-bbae-417f-b820-69cd224e433a",
+    "heartbeat": "863a0355-d3a3-4a72-bada-406e8b960035"
+  },
+  "enabled": true,
+  "checkIntervalMinutes": 120
+}

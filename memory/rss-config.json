@@ -1,0 +1,126 @@
+{
+  "name": "AI秘书RSS信息聚合系统",
+  "version": "1.0.0",
+  "updateInterval": {
+    "high": 3600000,
+    "medium": 86400000,
+    "low": 604800000
+  },
+  "feeds": {
+    "ai_news": {
+      "name": "AI行业资讯",
+      "priority": "high",
+      "sources": [
+        {
+          "name": "机器之心",
+          "url": "https://www.jiqizhixin.com/rss",
+          "category": "AI",
+          "language": "zh",
+          "status": "active"
+        },
+        {
+          "name": "36氪",
+          "url": "https://36kr.com/feed",
+          "category": "科技",
+          "language": "zh",
+          "status": "active"
+        },
+        {
+          "name": "雷锋网",
+          "url": "https://www.leiphone.com/feed",
+          "category": "AI",
+          "language": "zh",
+          "status": "active"
+        },
+        {
+          "name": "钛媒体",
+          "url": "https://www.tmtpost.com/rss.xml",
+          "category": "商业科技",
+          "language": "zh",
+          "status": "active"
+        },
+        {
+          "name": "量子位",
+          "url": "https://www.qbitai.com/rss",
+          "category": "AI",
+          "language": "zh",
+          "status": "blocked",
+          "note": "403 Forbidden，待修复"
+        },
+        {
+          "name": "InfoQ AI",
+          "url": "https://www.infoq.cn/ai/rss",
+          "category": "AI",
+          "language": "zh",
+          "status": "pending"
+        }
+      ]
+    },
+    "academic": {
+      "name": "学术论文",
+      "priority": "high",
+      "sources": [
+        {
+          "name": "arXiv AI",
+          "url": "https://arxiv.org/rss/cs.AI",
+          "category": "Academic",
+          "language": "en"
+        },
+        {
+          "name": "arXiv ML",
+          "url": "https://arxiv.org/rss/cs.LG",
+          "category": "Academic",
+          "language": "en"
+        }
+      ]
+    },
+    "policy": {
+      "name": "政策动态",
+      "priority": "medium",
+      "sources": [
+        {
+          "name": "教育部",
+          "url": "http://www.moe.gov.cn/rss.xml",
+          "category": "Policy",
+          "language": "zh"
+        },
+        {
+          "name": "科技部",
+          "url": "http://www.most.gov.cn/rss.xml",
+          "category": "Policy",
+          "language": "zh"
+        }
+      ]
+    }
+  },
+  "keywords": {
+    "ai_medical": ["AI医疗", "医疗AI", "智慧医疗", "AI制药"],
+    "blockchain": ["区块链", "Web3", "DeFi", "NFT"],
+    "metaverse": ["元宇宙", "Metaverse", "VR", "AR"],
+    "education": ["教育科技", "智慧教育", "在线教育"]
+  },
+  "delivery": {
+    "high_priority": {
+      "enabled": true,
+      "channels": ["feishu"],
+      "immediate": true
+    },
+    "daily_digest": {
+      "enabled": true,
+      "time": "09:00",
+      "timezone": "Asia/Shanghai",
+      "days": [1, 2, 3, 4, 5]
+    },
+    "weekly_report": {
+      "enabled": true,
+      "day": 1,
+      "time": "10:00",
+      "timezone": "Asia/Shanghai"
+    }
+  },
+  "storage": {
+    "type": "obsidian",
+    "vault": "/Users/tomscomputer/Documents/ObsidianVault",
+    "folder": "03 - 参考资料/RSS"
+  }
+}

@@ -1,0 +1,598 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 组织
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  businesses  Business[]
+  roles       Role[]
+  agents      Agent[]
+  meetings    Meeting[]
+  knowledgeBases KnowledgeBase[]
+
+  @@map("organizations")
+}
+
+// 业务
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  processTemplates ProcessTemplate[]
+
+  @@map("businesses")
+}
+
+// 流程模板
+model ProcessTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  definition  String
+  version     Int      @default(1)
+  status      String   @default("draft")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  processInstances ProcessInstance[]
+
+  @@map("process_templates")
+}
+
+// 流程实例
+model ProcessInstance {
+  id     String @id @default(cuid())
+  status String @default("running")
+  data   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  startedAt DateTime?
+  endedAt   DateTime?
+
+  templateId String
+  template   ProcessTemplate @relation(fields: [templateId], references: [id])
+
+  tasks Task[]
+
+  @@map("process_instances")
+}
+
+// 角色
+model Role {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  permissions String
+  level       Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  agents Agent[]
+
+  @@map("roles")
+}
+
+// Agent实例
+model Agent {
+  id           String  @id @default(cuid())
+  name         String
+  avatar       String?
+  status       String  @default("offline")
+  type         String  @default("ai")
+  config       String?
+  capabilities String?
+  lastSeenAt   DateTime?
+  position     String?
+
+  // Phase 3: 角色扮演配置
+  rolePlayConfig   String?  // JSON: {personality, speakingStyle, expertise}
+  roleTemplateId   String?
+  
+  // Phase 3: 能力画像
+  skillProfile     String?  // JSON: {skills:[{name,level,verified}],tags:[]}
+  performanceStats String?  // JSON: {completedTasks,avgQuality,responseTime}
+  availabilityScore Float   @default(1.0) // 0-1 可用性评分
+  workload         Int      @default(0)   // 当前负载
+  maxWorkload      Int      @default(10)  // 最大负载
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  roleId String?
+  role   Role?   @relation(fields: [roleId], references: [id])
+
+  assignedTasks        Task[] @relation("AssignedTasks")
+  createdTasks         Task[] @relation("CreatedTasks")
+  delegatedTasks       Task[] @relation("DelegatedTasks")
+  collaborations       TaskCollaborator[]
+  meetingParticipants  MeetingParticipant[]
+  
+  supervisorId         String?
+  supervisor           Agent?  @relation("AgentHierarchy", fields: [supervisorId], references: [id])
+  subordinates         Agent[] @relation("AgentHierarchy")
+  
+  // Phase 3: Agent版本管理
+  versions             AgentVersion[]
+
+  // 索引优化查询
+  @@index([organizationId])
+  @@index([status])
+  @@index([roleId])
+  @@index([supervisorId])
+  @@index([availabilityScore])
+  @@index([organizationId, status])
+
+  @@map("agents")
+}
+
+// Phase 3: Agent版本管理
+model AgentVersion {
+  id          String   @id @default(cuid())
+  version     Int
+  name        String
+  config      String   // JSON: 完整配置快照
+  description String?
+  createdAt   DateTime @default(now())
+  createdBy   String
+  
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  isActive    Boolean  @default(false)
+  
+  @@unique([agentId, version])
+  @@map("agent_versions")
+}
+
+// 任务
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("pending")
+  priority    String   @default("medium")
+  type        String   @default("default")
+  data        String?
+  
+  // 索引优化查询
+  @@index([status])
+  @@index([assigneeId])
+  @@index([creatorId])
+  @@index([createdAt])
+  @@index([dueDate])
+  @@index([status, assigneeId])
+  
+  // Phase 3: 任务技能需求
+  requiredSkills String? // JSON: [{skill,level,weight}]
+  estimatedHours Int?    // 预估工时
+  
+  collaborationMode String @default("single")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  startedAt   DateTime?
+  completedAt DateTime?
+  dueDate     DateTime?
+  claimDeadline DateTime?
+
+  processInstanceId String?
+  processInstance   ProcessInstance? @relation(fields: [processInstanceId], references: [id])
+
+  assigneeId String?
+  assignee   Agent?   @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  
+  creatorId  String?
+  creator    Agent?   @relation("CreatedTasks", fields: [creatorId], references: [id])
+  
+  delegatedById String?
+  delegatedBy   Agent?   @relation("DelegatedTasks", fields: [delegatedById], references: [id])
+  delegatedAt   DateTime?
+  delegationReason String?
+  
+  transferHistory String?
+  collaborators TaskCollaborator[]
+  dependencies TaskDependency[] @relation("TaskDependencies")
+  dependents   TaskDependency[] @relation("TaskDependents")
+  autoUnlock   Boolean  @default(true)
+  meetingResolutionId String?
+  generatedFromMeeting Meeting? @relation(fields: [meetingId], references: [id])
+  meetingId String?
+
+  @@map("tasks")
+}
+
+model TaskCollaborator {
+  id        String   @id @default(cuid())
+  role      String   @default("member")
+  status    String   @default("active")
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  @@unique([taskId, agentId])
+  @@map("task_collaborators")
+}
+
+model TaskDependency {
+  id              String @id @default(cuid())
+  dependencyType  String @default("blocks")
+  
+  taskId          String
+  task            Task   @relation("TaskDependencies", fields: [taskId], references: [id], onDelete: Cascade)
+  
+  dependsOnTaskId String
+  dependsOnTask   Task   @relation("TaskDependents", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([taskId, dependsOnTaskId])
+  @@map("task_dependencies")
+}
+
+// 会议
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("scheduled")
+  type        String   @default("discussion")
+  
+  // Phase 3: 会议角色扮演配置
+  rolePlayEnabled  Boolean  @default(false)
+  meetingTemplateId String?
+  
+  scheduledAt DateTime
+  duration    Int      @default(60)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  
+  roomId      String?
+  roomPosition String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  hostId      String
+  
+  participants MeetingParticipant[]
+  agendaItems  MeetingAgenda[]
+  resolutions  MeetingResolution[]
+  generatedTasks Task[]
+
+  // 索引优化查询
+  @@index([organizationId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([organizationId, status])
+
+  @@map("meetings")
+}
+
+model MeetingParticipant {
+  id           String   @id @default(cuid())
+  role         String   @default("participant")
+  status       String   @default("invited")
+  joinedAt     DateTime?
+  leftAt       DateTime?
+  
+  // Phase 3: 角色扮演发言风格
+  speakingStyle String?  // JSON: {formality, verbosity, tone}
+  
+  meetingId    String
+  meeting      Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  speakCount   Int      @default(0)
+  speakDuration Int     @default(0)
+
+  @@unique([meetingId, agentId])
+  @@map("meeting_participants")
+}
+
+model MeetingAgenda {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  duration    Int      @default(10)
+  order       Int      @default(0)
+  status      String   @default("pending")
+  
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  ownerId     String?
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("meeting_agenda")
+}
+
+model MeetingResolution {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  type        String   @default("decision")
+  
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  agendaItemId String?
+  assigneeId  String?
+  generatedTaskId String?
+  
+  createdAt   DateTime @default(now())
+  createdBy   String
+
+  @@map("meeting_resolutions")
+}
+
+model CollaborationEdge {
+  id          String   @id @default(cuid())
+  sourceId    String
+  targetId    String
+  type        String
+  weight      Float    @default(1.0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([sourceId, targetId, type])
+  @@map("collaboration_edges")
+}
+
+model AgentActivity {
+  id          String   @id @default(cuid())
+  agentId     String
+  type        String
+  data        String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([agentId, createdAt])
+  @@map("agent_activities")
+}
+
+// ============================================
+// Phase 3: 知识库RAG模型
+// ============================================
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // 向量配置
+  vectorDimension Int   @default(1536)
+  embeddingModel  String @default("text-embedding-3-small")
+  
+  status      String   @default("active") // active, archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  documents   KnowledgeDocument[]
+  
+  @@map("knowledge_bases")
+}
+
+model KnowledgeDocument {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   // 原始内容
+  fileType    String   // pdf, txt, md, docx
+  fileSize    Int
+  fileUrl     String?
+  
+  // 向量化状态
+  vectorStatus String  @default("pending") // pending, processing, completed, failed
+  chunkCount   Int     @default(0)
+  
+  metadata    String?  // JSON: 额外元数据
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  
+  knowledgeBaseId String
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  
+  chunks      DocumentChunk[]
+  
+  @@map("knowledge_documents")
+}
+
+model DocumentChunk {
+  id          String   @id @default(cuid())
+  content     String   // 分块内容
+  chunkIndex  Int      // 分块序号
+  tokenCount  Int      // token数量
+  
+  // 向量ID (外部向量数据库)
+  vectorId    String?  @unique
+  
+  // 本地向量存储 (SQLite扩展或简化方案)
+  embedding   String?  // JSON: 向量数组 (可选，用于本地存储)
+  
+  metadata    String?  // JSON: {documentId, position, etc.}
+  
+  documentId  String
+  document    KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([documentId])
+  @@map("document_chunks")
+}
+
+// ============================================
+// Phase 3: 角色扮演模板
+// ============================================
+
+model RolePlayTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   // meeting, task, general
+  
+  // 角色配置
+  personality String   // JSON: 性格特征
+  expertise   String   // JSON: 专业领域
+  speakingStyle String // JSON: 发言风格
+  behaviorRules String? // JSON: 行为规则
+  
+  // LLM提示模板
+  systemPrompt String // 系统提示词
+  
+  isDefault   Boolean  @default(false)
+  isPublic    Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  
+  @@map("role_play_templates")
+}
+
+// ============================================
+// Phase 3: 任务匹配历史记录
+// ============================================
+
+model TaskMatchHistory {
+  id          String   @id @default(cuid())
+  taskId      String
+  agentId     String
+  
+  // 匹配评分
+  skillMatchScore   Float   // 技能匹配度 0-1
+  availabilityScore Float   // 可用性评分 0-1
+  workloadScore     Float   // 负载评分 0-1
+  historyScore      Float   // 历史表现评分 0-1
+  overallScore      Float   // 综合评分 0-1
+  
+  // 匹配结果
+  wasAssigned Boolean @default(false)
+  wasAccepted Boolean @default(false)
+  completedAt DateTime?
+  qualityRating Int?  // 1-5 完成质量
+  
+  matchedAt   DateTime @default(now())
+  
+  @@index([taskId])
+  @@index([agentId])
+  @@map("task_match_history")
+}
+
+// ============================================
+// Phase 3: 自然语言指令解析记录
+// ============================================
+
+model NLCommandLog {
+  id          String   @id @default(cuid())
+  rawCommand  String   // 原始指令
+  parsedIntent String  // 解析的意图
+  parsedParams String? // JSON: 解析的参数
+  
+  // 执行结果
+  executed    Boolean  @default(false)
+  success     Boolean?
+  result      String?  // 执行结果
+  error       String?  // 错误信息
+  
+  // Agent关联
+  agentId     String?
+  
+  createdAt   DateTime @default(now())
+  processedAt DateTime?
+  
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("nl_command_logs")
+}
+
+// ============================================
+// Phase 3: 工作流触发器
+// ============================================
+
+model WorkflowTrigger {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // 触发条件
+  triggerType String   // nl_command, schedule, event, webhook
+  condition   String   // JSON: 触发条件配置
+  
+  // 执行动作
+  actionType  String   // create_task, update_agent, send_notification, etc.
+  actionConfig String // JSON: 动作配置
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  
+  // 执行历史
+  executions  WorkflowExecution[]
+  
+  @@map("workflow_triggers")
+}
+
+model WorkflowExecution {
+  id          String   @id @default(cuid())
+  triggerId   String
+  trigger     WorkflowTrigger @relation(fields: [triggerId], references: [id], onDelete: Cascade)
+  
+  status      String   @default("running") // running, completed, failed
+  input       String?  // JSON: 触发输入
+  output      String?  // JSON: 执行结果
+  error       String?
+  
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  @@map("workflow_executions")
+}
