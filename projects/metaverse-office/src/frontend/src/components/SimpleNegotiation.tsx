@@ -1,7 +1,62 @@
 // 协商对话气泡 - DOM覆盖层版本
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 import { metaverseDataService } from '../services/metaverseData'
+
+// 骨架屏组件
+const NegotiationSkeleton = ({ isMobile }: { isMobile: boolean }) => (
+  <div style={{ padding: isMobile ? '10px' : '20px' }}>
+    {/* 协商统计骨架 */}
+    <div style={{
+      background: 'rgba(255,255,255,0.05)',
+      padding: '16px',
+      borderRadius: '10px',
+      marginBottom: '16px',
+      height: '80px',
+      border: '1px solid rgba(255,255,255,0.1)'
+    }}>
+      <div style={{
+        background: 'linear-gradient(90deg, rgba(255,152,0,0.1) 25%, rgba(255,152,0,0.2) 50%, rgba(255,152,0,0.1) 75%)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 1.5s infinite',
+        borderRadius: '4px',
+        height: '100%'
+      }}/>
+    </div>
+    {/* 对话气泡骨架 */}
+    {[1, 2, 3].map(i => (
+      <div key={i} style={{
+        display: 'flex',
+        justifyContent: i % 2 === 0 ? 'flex-start' : 'flex-end',
+        marginBottom: '12px'
+      }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          padding: '12px 16px',
+          borderRadius: '16px',
+          maxWidth: '70%',
+          height: '60px',
+          width: i % 2 === 0 ? '200px' : '150px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(255,152,0,0.1) 25%, rgba(255,152,0,0.2) 50%, rgba(255,152,0,0.1) 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s infinite',
+            borderRadius: '4px',
+            height: '100%'
+          }}/>
+        </div>
+      </div>
+    ))}
+    <style>{`
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+    `}</style>
+  </div>
+)
 
 interface SimpleNegotiationProps {
   organizationId?: string
@@ -104,7 +159,7 @@ export function SimpleNegotiation({ organizationId, onClose }: SimpleNegotiation
         )}
       </div>
 
-      {loading && <div style={{ textAlign: 'center', padding: '40px', color: '#aaa' }}><div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div><div>加载协商记录...</div></div>}
+      {loading && <NegotiationSkeleton isMobile={isMobile} />}
 
       {!loading && negotiations.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -116,8 +171,23 @@ export function SimpleNegotiation({ organizationId, onClose }: SimpleNegotiation
 
       {!loading && negotiations.length > 0 && (
         <>
+          {/* 显示数量提示 */}
+          {negotiations.length > 30 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '8px',
+              background: 'rgba(233, 30, 99, 0.1)',
+              borderRadius: '6px',
+              marginBottom: '12px',
+              fontSize: '12px',
+              color: '#888'
+            }}>
+              显示最近30条 / 共{negotiations.length}条协商记录
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {negotiations.map((item: any, idx: number) => {
+            {/* 限制只显示最近30条协商记录以优化性能 */}
+            {negotiations.slice(-30).map((item: any, idx: number) => {
               const style = STANCE_COLORS[item.stance] || STANCE_COLORS.support
               return (
                 <div key={item.id} style={{ display: 'flex', gap: '12px', padding: isMobile ? '12px' : '16px', background: style.bg, borderRadius: '12px', border: `1px solid ${style.color}`, position: 'relative' }}>

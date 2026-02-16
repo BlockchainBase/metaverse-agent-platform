@@ -1,6 +1,55 @@
 // 推理链回放 - DOM覆盖层版本
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
+
+// 骨架屏组件
+const ReasoningSkeleton = ({ isMobile }: { isMobile: boolean }) => (
+  <div style={{ padding: isMobile ? '10px' : '20px' }}>
+    {/* 进度条骨架 */}
+    <div style={{
+      background: 'rgba(255,255,255,0.05)',
+      padding: '12px',
+      borderRadius: '10px',
+      marginBottom: '20px',
+      height: '40px',
+      border: '1px solid rgba(255,255,255,0.1)'
+    }}>
+      <div style={{
+        background: 'linear-gradient(90deg, rgba(156,39,176,0.1) 25%, rgba(156,39,176,0.2) 50%, rgba(156,39,176,0.1) 75%)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 1.5s infinite',
+        borderRadius: '4px',
+        height: '100%'
+      }}/>
+    </div>
+    {/* 推理步骤骨架 */}
+    {[1, 2, 3].map(i => (
+      <div key={i} style={{
+        background: 'rgba(255,255,255,0.05)',
+        padding: '16px',
+        borderRadius: '10px',
+        marginBottom: '12px',
+        height: '120px',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderLeft: '4px solid rgba(156,39,176,0.3)'
+      }}>
+        <div style={{
+          background: 'linear-gradient(90deg, rgba(156,39,176,0.1) 25%, rgba(156,39,176,0.2) 50%, rgba(156,39,176,0.1) 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
+          borderRadius: '4px',
+          height: '100%'
+        }}/>
+      </div>
+    ))}
+    <style>{`
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+    `}</style>
+  </div>
+)
 
 interface SimpleReasoningProps {
   organizationId?: string
@@ -122,7 +171,7 @@ export function SimpleReasoning({ organizationId, onClose }: SimpleReasoningProp
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch'
       }}>
-        {loading && <div style={{ textAlign: 'center', padding: '40px', color: '#aaa' }}><div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div><div>加载推理链...</div></div>}
+        {loading && <ReasoningSkeleton isMobile={isMobile} />}
 
         {!loading && steps.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px' }}>

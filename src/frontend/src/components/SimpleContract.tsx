@@ -1,6 +1,62 @@
 // 契约可视化 - DOM覆盖层版本
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
+
+// 骨架屏组件
+const ContractSkeleton = ({ isMobile }: { isMobile: boolean }) => (
+  <div style={{ padding: isMobile ? '10px' : '20px' }}>
+    {/* 统计卡片骨架 */}
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: '12px',
+      marginBottom: '20px'
+    }}>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{
+          background: 'rgba(255,255,255,0.05)',
+          padding: '16px',
+          borderRadius: '10px',
+          height: '60px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(33,150,243,0.1) 25%, rgba(33,150,243,0.2) 50%, rgba(33,150,243,0.1) 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s infinite',
+            borderRadius: '4px',
+            height: '100%'
+          }}/>
+        </div>
+      ))}
+    </div>
+    {/* 契约列表骨架 */}
+    {[1, 2, 3].map(i => (
+      <div key={i} style={{
+        background: 'rgba(255,255,255,0.05)',
+        padding: '16px',
+        borderRadius: '10px',
+        marginBottom: '12px',
+        height: '100px',
+        border: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <div style={{
+          background: 'linear-gradient(90deg, rgba(33,150,243,0.1) 25%, rgba(33,150,243,0.2) 50%, rgba(33,150,243,0.1) 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
+          borderRadius: '4px',
+          height: '100%'
+        }}/>
+      </div>
+    ))}
+    <style>{`
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+    `}</style>
+  </div>
+)
 
 interface SimpleContractProps {
   organizationId?: string
@@ -181,12 +237,7 @@ export function SimpleContract({ organizationId, onClose }: SimpleContractProps)
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch'
       }}>
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#aaa' }}>
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-            <div>加载契约数据...</div>
-          </div>
-        )}
+        {loading && <ContractSkeleton isMobile={isMobile} />}
 
         {!loading && contracts.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px' }}>

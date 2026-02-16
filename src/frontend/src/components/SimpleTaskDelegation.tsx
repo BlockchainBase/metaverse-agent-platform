@@ -1,6 +1,66 @@
 // 任务委托链可视化 - DOM覆盖层版本
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
+
+// 骨架屏组件
+const DelegationSkeleton = ({ isMobile }: { isMobile: boolean }) => (
+  <div style={{ padding: isMobile ? '10px' : '20px' }}>
+    {/* 统计卡片骨架 */}
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: '12px',
+      marginBottom: '20px'
+    }}>
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} style={{
+          background: 'rgba(255,255,255,0.05)',
+          padding: '12px',
+          borderRadius: '10px',
+          height: '50px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(255,152,0,0.1) 25%, rgba(255,152,0,0.2) 50%, rgba(255,152,0,0.1) 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s infinite',
+            borderRadius: '4px',
+            height: '100%'
+          }}/>
+        </div>
+      ))}
+    </div>
+    {/* 委托流程骨架 */}
+    <div style={{
+      background: 'rgba(255,255,255,0.05)',
+      borderRadius: '12px',
+      height: isMobile ? '250px' : '350px',
+      border: '1px solid rgba(255,152,0,0.2)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div style={{
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
+        border: '4px solid rgba(255,152,0,0.2)',
+        borderTop: '4px solid #FF9800',
+        animation: 'spin 1s linear infinite'
+      }}/>
+    </div>
+    <style>{`
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+)
 
 interface SimpleTaskDelegationProps {
   organizationId?: string
@@ -81,7 +141,7 @@ export function SimpleTaskDelegation({ organizationId, onClose }: SimpleTaskDele
         )}
       </div>
 
-      {loading && <div style={{ textAlign: 'center', padding: '40px', color: '#aaa' }}><div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div><div>加载委托链数据...</div></div>}
+      {loading && <DelegationSkeleton isMobile={isMobile} />}
 
       {!loading && (!data || data.nodes.length === 0) && (
         <div style={{ textAlign: 'center', padding: '40px' }}>
