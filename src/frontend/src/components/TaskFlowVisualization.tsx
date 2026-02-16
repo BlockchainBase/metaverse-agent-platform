@@ -1,7 +1,27 @@
 // 任务流可视化组件 - 使用DOM覆盖层（与管理中枢相同风格）
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 import { metaverseDataService } from '../services/metaverseData'
+
+// 骨架屏加载状态
+const SkeletonCard = ({ isMobile }: { isMobile: boolean }) => (
+  <div style={{
+    background: 'rgba(255,255,255,0.05)',
+    borderRadius: '8px',
+    padding: isMobile ? '10px' : '12px',
+    marginBottom: '8px',
+    border: '1px solid rgba(255,255,255,0.1)',
+    height: isMobile ? '60px' : '70px'
+  }}>
+    <div style={{
+      background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 1.5s infinite',
+      borderRadius: '4px',
+      height: '100%'
+    }}/>
+  </div>
+)
 
 interface TaskFlowVisualizationProps {
   organizationId?: string
@@ -30,8 +50,8 @@ export function TaskFlowVisualization({ organizationId, processInstanceId, onClo
   const { isMobile } = useDeviceDetect()
   const [touchStart, setTouchStart] = useState<number | null>(null)
   
-  // 性能优化：分页显示
-  const [displayLimit, setDisplayLimit] = useState(50)
+  // 性能优化：分页显示 - 初始只显示20个
+  const [displayLimit, setDisplayLimit] = useState(20)
   const [cachedData, setCachedData] = useState<any>(null)
   const [lastFetchTime, setLastFetchTime] = useState<number>(0)
 
@@ -64,7 +84,7 @@ export function TaskFlowVisualization({ organizationId, processInstanceId, onClo
       try {
         setIsLoading(true)
         const apiBase = import.meta.env.VITE_API_BASE || ''
-        const response = await fetch(`${apiBase}/api/metaverse/3d/tasks/flow/stream?organizationId=${organizationId || 'org-001'}&limit=100`)
+        const response = await fetch(`${apiBase}/api/metaverse/3d/tasks/flow/stream?organizationId=${organizationId || 'org-001'}&limit=30`)
         const result = await response.json()
         if (result.success) {
           setTaskFlow(result.data)
@@ -114,7 +134,15 @@ export function TaskFlowVisualization({ organizationId, processInstanceId, onClo
   }, [organizationId, processInstanceId, cachedData, lastFetchTime])
 
   // 响应式样式
-  const containerStyle: React.CSSProperties = isMobile ? {
+  // 部门配置（常量，不需要重新创建）
+const DEPARTMENTS = {
+  marketing: { name: '🎯 市场部', color: '#E91E63', agents: ['M1', 'M2', 'marketing'] },
+  solution: { name: '💡 方案部', color: '#9C27B0', agents: ['S1', 'S2', 'solution'] },
+  delivery: { name: '💻 交付部', color: '#2196F3', agents: ['D1', 'D2', 'O1', 'O2', 'developer', 'devops'] },
+  management: { name: '📊 管理中心', color: '#FF9800', agents: ['P1', 'F1', 'A1', 'project', 'finance', 'assistant'] }
+}
+
+const containerStyle: React.CSSProperties = isMobile ? {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
     background: 'rgba(20, 20, 40, 0.98)',
@@ -174,11 +202,44 @@ export function TaskFlowVisualization({ organizationId, processInstanceId, onClo
         )}
       </div>
 
+      {/* 添加CSS动画 */}
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+      `}</style>
+
       {isLoading && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#aaa' }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-          <div>加载任务流数据...</div>
-        </div>
+        <>
+          {/* 骨架屏统计卡片 */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)',
+            gap: '12px',
+            marginBottom: '20px'
+          }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} style={{
+                background: 'rgba(255,255,255,0.05)',
+                padding: isMobile ? '12px' : '16px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                height: '70px'
+              }}>
+                <div style={{
+                  background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 1.5s infinite',
+                  borderRadius: '4px',
+                  height: '100%'
+                }}/>
+              </div>
+            ))}
+          </div>
+          {/* 骨架屏任务列表 */}
+          {[1, 2, 3, 4, 5].map(i => <SkeletonCard key={i} isMobile={isMobile} />)}
+        </>
       )}
 
       {!isLoading && (!taskFlow || taskFlow.nodes.length === 0) && (
@@ -262,7 +323,7 @@ export function TaskFlowVisualization({ organizationId, processInstanceId, onClo
                 当前显示 {displayLimit} / {taskFlow.nodes.length} 个任务
               </div>
               <button
-                onClick={() => setDisplayLimit(prev => Math.min(prev + 50, taskFlow.nodes.length))}
+                onClick={() => setDisplayLimit(prev => Math.min(prev + 20, taskFlow.nodes.length))}
                 style={{
                   padding: '8px 20px',
                   background: 'rgba(0, 229, 255, 0.2)',
@@ -273,53 +334,61 @@ export function TaskFlowVisualization({ organizationId, processInstanceId, onClo
                   fontSize: '13px'
                 }}
               >
-                加载更多 (+50)
+                加载更多 (+20)
               </button>
             </div>
           )}
 
-          {/* 按部门分类的任务列表 */}
+          {/* 按部门分类的任务列表 - 使用useMemo优化性能 */}
           {(() => {
-            // 按部门分组任务 - 限制数量以优化性能
-            const departments = {
-              marketing: { name: '🎯 市场部', color: '#E91E63', agents: ['M1', 'M2', 'marketing'] },
-              solution: { name: '💡 方案部', color: '#9C27B0', agents: ['S1', 'S2', 'solution'] },
-              delivery: { name: '💻 交付部', color: '#2196F3', agents: ['D1', 'D2', 'O1', 'O2', 'developer', 'devops'] },
-              management: { name: '📊 管理中心', color: '#FF9800', agents: ['P1', 'F1', 'A1', 'project', 'finance', 'assistant'] }
-            }
-            
-            // 只处理前displayLimit个任务，优化性能
-            const tasks = taskFlow.nodes
-              .filter((n: any) => n.type === 'task')
-              .slice(0, displayLimit)
-            
-            // 分配任务到部门
-            const deptTasks: Record<string, any[]> = {
-              marketing: [],
-              solution: [],
-              delivery: [],
-              management: [],
-              other: []
-            }
-            
-            tasks.forEach((task: any) => {
-              const assignee = task.data?.assignee || ''
-              const role = task.data?.role || ''
-              let assigned = false
+            // 使用useMemo缓存部门分组计算
+            const { deptTasks, totalDisplayed } = useMemo(() => {
+              // 只处理前displayLimit个任务
+              const tasks = taskFlow.nodes
+                .filter((n: any) => n.type === 'task')
+                .slice(0, displayLimit)
               
-              for (const [deptKey, dept] of Object.entries(departments)) {
-                if (dept.agents.some(a => assignee.includes(a) || role.includes(a))) {
-                  deptTasks[deptKey].push(task)
-                  assigned = true
-                  break
-                }
+              // 分配任务到部门
+              const deptTasks: Record<string, any[]> = {
+                marketing: [],
+                solution: [],
+                delivery: [],
+                management: [],
+                other: []
               }
-              if (!assigned) deptTasks.other.push(task)
-            })
+              
+              tasks.forEach((task: any) => {
+                const assignee = task.data?.assignee || ''
+                const role = task.data?.role || ''
+                let assigned = false
+                
+                for (const [deptKey, dept] of Object.entries(DEPARTMENTS)) {
+                  if (dept.agents.some(a => assignee.includes(a) || role.includes(a))) {
+                    deptTasks[deptKey].push(task)
+                    assigned = true
+                    break
+                  }
+                }
+                if (!assigned) deptTasks.other.push(task)
+              })
+              
+              return { deptTasks, totalDisplayed: tasks.length }
+            }, [taskFlow.nodes, displayLimit])
             
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {Object.entries(departments).map(([deptKey, dept]) => {
+                {/* 显示任务统计 */}
+                <div style={{
+                  fontSize: '13px',
+                  color: '#888',
+                  textAlign: 'center',
+                  padding: '8px',
+                  background: 'rgba(0, 229, 255, 0.05)',
+                  borderRadius: '6px'
+                }}>
+                  显示 {totalDisplayed} / {taskFlow.nodes.filter((n: any) => n.type === 'task').length} 个任务
+                </div>
+                {Object.entries(DEPARTMENTS).map(([deptKey, dept]) => {
                   const deptTaskList = deptTasks[deptKey]
                   if (deptTaskList.length === 0) return null
                   
