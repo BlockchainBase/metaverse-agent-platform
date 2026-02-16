@@ -1,67 +1,7 @@
 // 简化版协作网络组件 - 使用DOM覆盖层（与管理中枢相同风格）
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 import { metaverseDataService } from '../services/metaverseData'
-
-// 骨架屏组件
-const NetworkSkeleton = ({ isMobile }: { isMobile: boolean }) => (
-  <div style={{ padding: isMobile ? '10px' : '20px' }}>
-    {/* 统计卡片骨架 */}
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: '12px',
-      marginBottom: '20px'
-    }}>
-      {[1, 2, 3].map(i => (
-        <div key={i} style={{
-          background: 'rgba(255,255,255,0.05)',
-          padding: '16px',
-          borderRadius: '10px',
-          height: '60px',
-          border: '1px solid rgba(255,255,255,0.1)'
-        }}>
-          <div style={{
-            background: 'linear-gradient(90deg, rgba(156,39,176,0.1) 25%, rgba(156,39,176,0.2) 50%, rgba(156,39,176,0.1) 75%)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 1.5s infinite',
-            borderRadius: '4px',
-            height: '100%'
-          }}/>
-        </div>
-      ))}
-    </div>
-    {/* 网络图骨架 */}
-    <div style={{
-      background: 'rgba(255,255,255,0.05)',
-      borderRadius: '12px',
-      height: isMobile ? '300px' : '400px',
-      border: '1px solid rgba(156,39,176,0.2)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <div style={{
-        width: isMobile ? '150px' : '200px',
-        height: isMobile ? '150px' : '200px',
-        borderRadius: '50%',
-        border: '4px solid rgba(156,39,176,0.2)',
-        borderTop: '4px solid #9C27B0',
-        animation: 'spin 1s linear infinite'
-      }}/>
-    </div>
-    <style>{`
-      @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `}</style>
-  </div>
-)
 
 interface SimpleCollaborationNetworkProps {
   organizationId?: string
@@ -153,7 +93,7 @@ export function SimpleCollaborationNetwork({ organizationId, onClose }: SimpleCo
         )}
       </div>
 
-      {loading && <NetworkSkeleton isMobile={isMobile} />}
+      {loading && <div style={{ textAlign: 'center', padding: '40px', color: '#aaa' }}><div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div><div>加载协作网络数据...</div></div>}
 
       {!loading && data && (
         <>
@@ -167,8 +107,7 @@ export function SimpleCollaborationNetwork({ organizationId, onClose }: SimpleCo
               minHeight: '200px'
             }}>
               <h4 style={{ margin: '0 0 12px 0', color: '#E040FB', fontSize: '14px' }}>
-                🕸️ 协作关系图 ({Math.min(data?.nodes?.length || 0, 20)}/{data?.nodes?.length || 0}个节点, {data?.edges?.length || 0}条连接)
-                {data?.nodes?.length > 20 && <span style={{fontSize: '12px', color: '#888', marginLeft: '8px'}}>(显示前20个)</span>}
+                🕸️ 协作关系图 ({data?.edges?.length || 0}条连接)
               </h4>
               
               {/* SVG网络图 */}
@@ -219,8 +158,8 @@ export function SimpleCollaborationNetwork({ organizationId, onClose }: SimpleCo
                     )
                   })}
                   
-                  {/* Agent节点 - 限制最多显示20个以优化性能 */}
-                  {data.nodes.slice(0, 20).map((node: any, index: number) => {
+                  {/* Agent节点 */}
+                  {data.nodes.map((node: any, index: number) => {
                     const angleStep = (2 * Math.PI) / data.nodes.length
                     const radius = 100
                     const centerX = 200

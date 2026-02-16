@@ -1,0 +1,35 @@
+{
+  "name": "metaverse-office-backend",
+  "version": "1.0.0",
+  "description": "数字员工元宇宙办公室 - 后端服务",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "axios": "^1.6.5",
+    "better-sqlite3": "^12.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "seedrandom": "^3.0.5",
+    "socket.io": "^4.7.4",
+    "uuid": "^13.0.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.6",
+    "@types/node-cron": "^3.0.11",
+    "@types/seedrandom": "^3.0.8",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

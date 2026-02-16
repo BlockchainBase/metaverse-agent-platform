@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>API测试</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #1a1a2e; color: white; }
+    .agent { background: #16213e; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    .online { color: #4CAF50; }
+    .busy { color: #f44336; }
+    .meeting { color: #ff9800; }
+    h1 { color: #e94560; }
+  </style>
+</head>
+<body>
+  <h1>🚀 数字人元宇宙 - API测试页面</h1>
+  <div id="loading">加载中...</div>
+  <div id="agents"></div>
+  
+  <script>
+    fetch('http://localhost:3000/api/metaverse/3d/agents/status/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ organizationId: 'org-001' })
+    })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('loading').style.display = 'none';
+      const container = document.getElementById('agents');
+      if (data.success && data.data.agents) {
+        data.data.agents.forEach(agent => {
+          const div = document.createElement('div');
+          div.className = 'agent';
+          const statusClass = agent.status === 'online' ? 'online' : agent.status === 'busy' ? 'busy' : 'meeting';
+          div.innerHTML = `
+            <h3>${agent.avatar} ${agent.name}</h3>
+            <p>角色: ${agent.role?.name || '未知'}</p>
+            <p>状态: <span class="${statusClass}">${agent.status}</span></p>
+            <p>当前任务: ${agent.currentTasks?.length > 0 ? agent.currentTasks[0].title : '无'}</p>
+          `;
+          container.appendChild(div);
+        });
+      } else {
+        container.innerHTML = '<p style="color:red">数据加载失败</p>';
+      }
+    })
+    .catch(err => {
+      document.getElementById('loading').innerHTML = '<p style="color:red">错误: ' + err.message + '</p>';
+    });
+  </script>
+</body>
+</html>
