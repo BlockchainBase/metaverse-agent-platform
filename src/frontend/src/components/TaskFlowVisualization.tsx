@@ -3,20 +3,18 @@ import { useState, useEffect, useMemo } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 import { metaverseDataService } from '../services/metaverseData'
 
-// 骨架屏加载状态
+// 骨架屏加载状态 - 简化版（避免CSS keyframes问题）
 const SkeletonCard = ({ isMobile }: { isMobile: boolean }) => (
   <div style={{
-    background: 'rgba(255,255,255,0.05)',
+    background: 'rgba(255,255,255,0.08)',
     borderRadius: '8px',
     padding: isMobile ? '10px' : '12px',
     marginBottom: '8px',
-    border: '1px solid rgba(255,255,255,0.1)',
+    border: '1px solid rgba(255,255,255,0.15)',
     height: isMobile ? '60px' : '70px'
   }}>
     <div style={{
-      background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%)',
-      backgroundSize: '200% 100%',
-      animation: 'shimmer 1.5s infinite',
+      background: 'linear-gradient(90deg, rgba(0,229,255,0.1) 0%, rgba(0,229,255,0.2) 50%, rgba(0,229,255,0.1) 100%)',
       borderRadius: '4px',
       height: '100%'
     }}/>
@@ -202,14 +200,6 @@ const containerStyle: React.CSSProperties = isMobile ? {
         )}
       </div>
 
-      {/* 添加CSS动画 */}
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
-
       {isLoading && (
         <>
           {/* 骨架屏统计卡片 */}
@@ -221,16 +211,14 @@ const containerStyle: React.CSSProperties = isMobile ? {
           }}>
             {[1, 2, 3, 4].map(i => (
               <div key={i} style={{
-                background: 'rgba(255,255,255,0.05)',
+                background: 'rgba(0,229,255,0.1)',
                 padding: isMobile ? '12px' : '16px',
                 borderRadius: '10px',
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid rgba(0,229,255,0.2)',
                 height: '70px'
               }}>
                 <div style={{
-                  background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%)',
-                  backgroundSize: '200% 100%',
-                  animation: 'shimmer 1.5s infinite',
+                  background: 'rgba(0,229,255,0.15)',
                   borderRadius: '4px',
                   height: '100%'
                 }}/>
@@ -339,41 +327,37 @@ const containerStyle: React.CSSProperties = isMobile ? {
             </div>
           )}
 
-          {/* 按部门分类的任务列表 - 使用useMemo优化性能 */}
+          {/* 按部门分类的任务列表 */}
           {(() => {
-            // 使用useMemo缓存部门分组计算
-            const { deptTasks, totalDisplayed } = useMemo(() => {
-              // 只处理前displayLimit个任务
-              const tasks = taskFlow.nodes
-                .filter((n: any) => n.type === 'task')
-                .slice(0, displayLimit)
+            // 计算部门分组（简化版，避免hooks问题）
+            const tasks = taskFlow.nodes
+              .filter((n: any) => n.type === 'task')
+              .slice(0, displayLimit)
+            
+            const deptTasks: Record<string, any[]> = {
+              marketing: [],
+              solution: [],
+              delivery: [],
+              management: [],
+              other: []
+            }
+            
+            tasks.forEach((task: any) => {
+              const assignee = task.data?.assignee || ''
+              const role = task.data?.role || ''
+              let assigned = false
               
-              // 分配任务到部门
-              const deptTasks: Record<string, any[]> = {
-                marketing: [],
-                solution: [],
-                delivery: [],
-                management: [],
-                other: []
-              }
-              
-              tasks.forEach((task: any) => {
-                const assignee = task.data?.assignee || ''
-                const role = task.data?.role || ''
-                let assigned = false
-                
-                for (const [deptKey, dept] of Object.entries(DEPARTMENTS)) {
-                  if (dept.agents.some(a => assignee.includes(a) || role.includes(a))) {
-                    deptTasks[deptKey].push(task)
-                    assigned = true
-                    break
-                  }
+              for (const [deptKey, dept] of Object.entries(DEPARTMENTS)) {
+                if (dept.agents.some(a => assignee.includes(a) || role.includes(a))) {
+                  deptTasks[deptKey].push(task)
+                  assigned = true
+                  break
                 }
-                if (!assigned) deptTasks.other.push(task)
-              })
-              
-              return { deptTasks, totalDisplayed: tasks.length }
-            }, [taskFlow.nodes, displayLimit])
+              }
+              if (!assigned) deptTasks.other.push(task)
+            })
+            
+            const totalDisplayed = tasks.length
             
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

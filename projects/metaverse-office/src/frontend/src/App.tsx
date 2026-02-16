@@ -123,9 +123,14 @@ function App() {
   const getAgentPosition = (agent: AgentState): [number, number, number] => {
     const role = getRoleFromAgent(agent)
 
-    // 如果后端有位置数据且是四合院场景，使用后端数据
+    // 如果后端有有效位置数据且是四合院场景，使用后端数据
     if (agent.position && sceneType === 'courtyard') {
-      return [agent.position.x, agent.position.y, agent.position.z]
+      const { x, y, z } = agent.position
+      // 验证位置数据有效性（避免0,0,0或无效值）
+      if (x !== 0 || y !== 0 || z !== 0) {
+        return [x, y, z]
+      }
+      // 无效位置，回退到前端计算
     }
 
     // 会议室场景：围坐在会议桌周围

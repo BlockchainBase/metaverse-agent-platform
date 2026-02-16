@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
+// 强制引入以确保组件被打包
+import { WalkingCartoonAgent } from './components/CartoonAgent'
+console.log('CartoonAgent component:', WalkingCartoonAgent)
+
 // 获取加载屏幕元素
 const loadingBar = document.getElementById('loading-bar-inner')
 const loadingScreen = document.getElementById('loading-screen')

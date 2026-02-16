@@ -384,18 +384,18 @@ class MetaverseDataService {
   // 批量获取Agent状态
   async getAgentStatusBatch(agentIds?: string[]): Promise<AgentState[]> {
     try {
-      const body: any = { includeTasks: true, includeMetrics: true }
-      if (agentIds) body.agentIds = agentIds
-      if (this.organizationId) body.organizationId = this.organizationId
+      // 优先使用后端实际存在的 /api/agents 端点
+      let url = `${this.apiBase}/api/agents`
+      if (this.organizationId) url += `?organizationId=${this.organizationId}`
 
-      const response = await fetch(`${this.apiBase}/api/metaverse/3d/agents/status/batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      })
-      
+      const response = await fetch(url)
       const result = await response.json()
-      return result.success ? result.data.agents : []
+      
+      if (result.success && result.data) {
+        const agents = Array.isArray(result.data) ? result.data : result.data.agents
+        return agents.map(this.transformAgent)
+      }
+      return []
     } catch (error) {
       console.error('获取Agent状态失败:', error)
       return []
@@ -498,39 +498,86 @@ class MetaverseDataService {
 
   // 转换后端Agent格式到前端格式
   private transformAgent(agent: any): AgentState {
-    const roleMap: Record<string, ManagerRole> = {
-      '院长': 'assistant',
-      '副院长': 'project',
-      '技术总监': 'developer',
-      '产品总监': 'solution',
-      '市场总监': 'marketing',
-      '财务总监': 'finance',
-      '运营总监': 'devops'
+    // ID到角色的映射
+    const idToRole: Record<string, ManagerRole> = {
+      'M1': 'marketing',
+      'M2': 'marketing',
+      'S1': 'solution',
+      'S2': 'solution',
+      'D1': 'developer',
+      'D2': 'developer',
+      'O1': 'devops',
+      'O2': 'devops',
+      'P1': 'project',
+      'F1': 'finance',
+      'A1': 'assistant'
+    }
+
+    // 默认位置配置（四合院四房布局）
+    const defaultPositions: Record<string, { x: number, y: number, z: number }> = {
+      'M1': { x: -3, y: 0, z: 12 },   // 市场部 - 南房左
+      'M2': { x: 3, y: 0, z: 12 },    // 市场部 - 南房右
+      'S1': { x: 8, y: 0, z: -3 },    // 方案部 - 东厢房前
+      'S2': { x: 8, y: 0, z: 3 },     // 方案部 - 东厢房后
+      'D1': { x: -8, y: 0, z: -3 },   // 研发部 - 西厢房前
+      'D2': { x: -8, y: 0, z: 3 },    // 研发部 - 西厢房后
+      'O1': { x: -12, y: 0, z: -3 },  // 运维部 - 西厢房前偏
+      'O2': { x: -12, y: 0, z: 3 },   // 运维部 - 西厢房后偏
+      'P1': { x: 0, y: 0, z: -10 },   // 项目管理 - 北房中
+      'F1': { x: 4, y: 0, z: -10 },   // 财务 - 北房右
+      'A1': { x: -4, y: 0, z: -10 }   // 助理 - 北房左
+    }
+
+    // 处理position（可能是对象或字符串）
+    let position = defaultPositions[agent.id] || { x: 0, y: 0, z: 0 }
+    if (agent.position) {
+      if (typeof agent.position === 'string') {
+        try {
+          const parsed = JSON.parse(agent.position)
+          // 只有非零位置才使用
+          if (parsed.x !== 0 || parsed.y !== 0 || parsed.z !== 0) {
+            position = parsed
+          }
+        } catch {
+          // 使用默认位置
+        }
+      } else if (typeof agent.position === 'object') {
+        // 只有非零位置才使用
+        if (agent.position.x !== 0 || agent.position.y !== 0 || agent.position.z !== 0) {
+          position = agent.position
+        }
+      }
     }
 
     return {
       id: agent.id,
       name: agent.name,
-      role: roleMap[agent.role?.name] || agent.role?.name || 'unknown',
+      role: idToRole[agent.id] || agent.role || 'unknown',
       status: agent.status || 'offline',
-      position: agent.position ? JSON.parse(agent.position) : { x: 0, y: 0, z: 0 },
+      position: position,
       avatar: agent.avatar,
-      currentTask: agent.assignedTasks?.[0],
-      currentTasks: agent.assignedTasks,
-      metrics: agent.workload !== undefined ? {
-        completedTasks: 0,
-        inProgressTasks: agent.assignedTasks?.length || 0,
-        collaborationCount: 0,
-        workloadPercentage: (agent.workload / (agent.maxWorkload || 10)) * 100,
-        availabilityScore: agent.availabilityScore || 1.0,
-        lastActiveMinutes: agent.lastSeenAt 
-          ? Math.floor((Date.now() - new Date(agent.lastSeenAt).getTime()) / 60000)
-          : null
+      currentTask: agent.currentTask ? {
+        id: agent.id + '-task',
+        title: agent.currentTask,
+        status: agent.status || 'idle',
+        priority: 'normal'
       } : undefined,
-      efficiency: agent.performanceStats?.completedTasks 
-        ? Math.round((agent.performanceStats.completedTasks / 10) * 100)
-        : 85,
-      lastUpdate: agent.updatedAt || new Date().toISOString()
+      currentTasks: agent.currentTask ? [{
+        id: agent.id + '-task',
+        title: agent.currentTask,
+        status: agent.status || 'idle',
+        priority: 'normal'
+      }] : [],
+      metrics: {
+        completedTasks: 0,
+        inProgressTasks: agent.currentTask ? 1 : 0,
+        collaborationCount: 0,
+        workloadPercentage: agent.taskProgress || 0,
+        availabilityScore: (agent.efficiency || 85) / 100,
+        lastActiveMinutes: null
+      },
+      efficiency: agent.efficiency || 85,
+      lastUpdate: agent.lastUpdate || new Date().toISOString()
     }
   }
 

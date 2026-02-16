@@ -27,6 +27,9 @@ import { AgentState, ManagerRole } from './services/metaverseData'
 import { ROLE_CONFIG, STATUS_CONFIG, ManagerStatus, getAgentPositionV3 } from './data/managers'
 import './App.css'
 
+// 强制引入CartoonAgent组件以确保被打包
+import './components/CartoonAgent'
+
 // v3.0: 使用新的四房布局位置配置（定义在 managers.ts 中）
 // 南房(前)=市场, 东厢房(右)=方案部, 西厢房(左)=交付部, 北房(后)=管理中心
 

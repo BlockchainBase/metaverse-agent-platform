@@ -86,9 +86,59 @@ export function SimpleCollaborationNetwork({ organizationId, onClose }: SimpleCo
       try {
         setLoading(true)
         const apiBase = import.meta.env.VITE_API_BASE || ''
-        const response = await fetch(`${apiBase}/api/metaverse/3d/collaboration/network/v2?organizationId=${organizationId || 'org-001'}`)
+        
+        // 使用 /api/agents 获取数据并生成协作网络
+        const response = await fetch(`${apiBase}/api/agents`)
         const result = await response.json()
-        if (result.success) setData(result.data)
+        
+        if (result.success && result.data) {
+          const agents = result.data
+          
+          // 生成协作网络数据
+          const nodes = agents.map((a: any) => ({
+            id: a.id,
+            type: 'agent',
+            label: a.name,
+            data: { role: a.role, status: a.status }
+          }))
+          
+          // 生成部门间协作边
+          const edges: any[] = []
+          const roleGroups: Record<string, string[]> = {}
+          agents.forEach((a: any) => {
+            if (!roleGroups[a.role]) roleGroups[a.role] = []
+            roleGroups[a.role].push(a.id)
+          })
+          
+          // 同部门内连接
+          Object.values(roleGroups).forEach((group: string[]) => {
+            for (let i = 0; i < group.length; i++) {
+              for (let j = i + 1; j < group.length; j++) {
+                edges.push({
+                  id: `${group[i]}-${group[j]}`,
+                  source: group[i],
+                  target: group[j],
+                  weight: 3,
+                  collaborationCount: 1
+                })
+              }
+            }
+          })
+          
+          const networkData = {
+            nodes,
+            edges,
+            stats: {
+              totalAgents: agents.length,
+              totalConnections: edges.length,
+              avgConnections: edges.length / agents.length,
+              isolatedAgents: 0,
+              clusters: Object.keys(roleGroups).length
+            }
+          }
+          
+          setData(networkData)
+        }
       } catch (e) {
         console.error('Network error:', e)
       } finally {
@@ -99,27 +149,10 @@ export function SimpleCollaborationNetwork({ organizationId, onClose }: SimpleCo
     // 初始加载
     fetchData()
     
-    // 连接WebSocket并订阅协作网络更新
-    metaverseDataService.connect(organizationId)
-    metaverseDataService.subscribeCollaborationNetwork()
-    
-    // 监听实时更新
-    const handleNetworkUpdate = (newData: any) => {
-      console.log('🕸️ 收到协作网络实时更新:', newData)
-      if (newData && newData.nodes) {
-        setData(newData)
-      } else if (newData && newData.data) {
-        setData(newData.data)
-      }
-    }
-    
-    metaverseDataService.on('network:collaboration:update', handleNetworkUpdate)
-    
-    // 备用：每30秒轮询一次
+    // 每30秒刷新
     const interval = setInterval(fetchData, 30000)
     
     return () => {
-      metaverseDataService.off('network:collaboration:update', handleNetworkUpdate)
       clearInterval(interval)
     }
   }, [organizationId])

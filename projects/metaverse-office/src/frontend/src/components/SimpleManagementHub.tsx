@@ -90,11 +90,7 @@ export function SimpleManagementHub({ organizationId, onClose }: SimpleManagemen
         
         // 并行获取Agent数据和任务数据
         const [agentsRes, tasksRes] = await Promise.all([
-          fetch(`${apiBase}/api/metaverse/3d/agents/status/batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-          }),
+          fetch(`${apiBase}/api/agents`),
           fetch(`${apiBase}/api/metaverse/3d/tasks/flow/stream?organizationId=${organizationId || 'org-001'}`)
         ])
         

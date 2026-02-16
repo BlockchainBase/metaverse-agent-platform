@@ -14,7 +14,7 @@ export function useAgents(organizationId: string = DEFAULT_ORGANIZATION_ID) {
   const lastSuccessRef = useRef<number>(Date.now())
 
   useEffect(() => {
-    // 连接WebSocket
+    // 连接WebSocket（可选，失败不影响HTTP轮询）
     metaverseDataService.connect(organizationId)
 
     // 加载初始数据
@@ -24,13 +24,12 @@ export function useAgents(organizationId: string = DEFAULT_ORGANIZATION_ID) {
         const data = await metaverseDataService.getAgentStatusBatch()
         setAgents(data)
         
-        // 健康检查：如果HTTP请求成功，认为后端在线
+        // 🎯 修复：只要HTTP请求成功就认为后端在线
+        // WebSocket是可选的增强功能，不是必需的
         const httpSuccess = data.length > 0
-        const socketConnected = metaverseDataService.isConnected()
-        const isBackendOnline = httpSuccess && socketConnected
         
-        setIsConnected(isBackendOnline)
-        if (isBackendOnline) {
+        setIsConnected(httpSuccess)
+        if (httpSuccess) {
           lastSuccessRef.current = Date.now()
         }
       } catch (err) {
@@ -57,27 +56,24 @@ export function useAgents(organizationId: string = DEFAULT_ORGANIZATION_ID) {
       lastSuccessRef.current = Date.now()
     }
 
-    // 监听连接状态
+    // 监听连接状态（WebSocket状态，仅用于日志/调试）
     const handleConnectionStatus = (data: any) => {
-      // 只有当HTTP也成功时才认为真正在线
-      const timeSinceLastSuccess = Date.now() - lastSuccessRef.current
-      const isBackendHealthy = data.connected && timeSinceLastSuccess < 30000 // 30秒内成功过
-      setIsConnected(isBackendHealthy)
+      console.log('🔌 WebSocket状态:', data.connected ? '已连接' : '已断开')
+      // WebSocket状态不再影响 isConnected，只做记录
     }
 
     metaverseDataService.on('agent:status:update', handleAgentUpdate)
     metaverseDataService.on('connection:status', handleConnectionStatus)
 
-    // 定期健康检查（每10秒）
+    // 定期健康检查（每10秒）- 使用HTTP轮询作为主要数据源
     const healthCheck = setInterval(async () => {
       try {
         const data = await metaverseDataService.getAgentStatusBatch()
         const httpSuccess = data.length > 0
-        const socketConnected = metaverseDataService.isConnected()
-        const isBackendOnline = httpSuccess && socketConnected
         
-        setIsConnected(isBackendOnline)
-        if (isBackendOnline) {
+        // 🎯 修复：仅根据HTTP请求结果判断连接状态
+        setIsConnected(httpSuccess)
+        if (httpSuccess) {
           lastSuccessRef.current = Date.now()
           setAgents(data) // 更新最新数据
         }
@@ -98,7 +94,8 @@ export function useAgents(organizationId: string = DEFAULT_ORGANIZATION_ID) {
     try {
       const data = await metaverseDataService.getAgentStatusBatch()
       setAgents(data)
-      setIsConnected(data.length > 0 && metaverseDataService.isConnected())
+      // 🎯 修复：仅根据HTTP请求结果判断连接状态
+      setIsConnected(data.length > 0)
     } catch {
       setIsConnected(false)
     }

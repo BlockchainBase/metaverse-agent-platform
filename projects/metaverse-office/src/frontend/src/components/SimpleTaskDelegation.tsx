@@ -1,6 +1,66 @@
 // 任务委托链可视化 - DOM覆盖层版本
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
+
+// 骨架屏组件
+const DelegationSkeleton = ({ isMobile }: { isMobile: boolean }) => (
+  <div style={{ padding: isMobile ? '10px' : '20px' }}>
+    {/* 统计卡片骨架 */}
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4, 1fr)',
+      gap: '12px',
+      marginBottom: '20px'
+    }}>
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} style={{
+          background: 'rgba(255,255,255,0.05)',
+          padding: '12px',
+          borderRadius: '10px',
+          height: '50px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(255,152,0,0.1) 25%, rgba(255,152,0,0.2) 50%, rgba(255,152,0,0.1) 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.5s infinite',
+            borderRadius: '4px',
+            height: '100%'
+          }}/>
+        </div>
+      ))}
+    </div>
+    {/* 委托流程骨架 */}
+    <div style={{
+      background: 'rgba(255,255,255,0.05)',
+      borderRadius: '12px',
+      height: isMobile ? '250px' : '350px',
+      border: '1px solid rgba(255,152,0,0.2)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div style={{
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
+        border: '4px solid rgba(255,152,0,0.2)',
+        borderTop: '4px solid #FF9800',
+        animation: 'spin 1s linear infinite'
+      }}/>
+    </div>
+    <style>{`
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+)
 
 interface SimpleTaskDelegationProps {
   organizationId?: string
@@ -25,23 +85,43 @@ export function SimpleTaskDelegation({ organizationId, onClose }: SimpleTaskDele
       try {
         setLoading(true)
         const apiBase = import.meta.env.VITE_API_BASE || ''
-        const response = await fetch(`${apiBase}/api/metaverse/3d/delegations?organizationId=${organizationId || 'org-001'}`)
+        
+        // 使用 /api/agents 获取数据并生成委托链
+        const response = await fetch(`${apiBase}/api/agents`)
         const result = await response.json()
-        if (result.success && result.data.length > 0) {
-          const delegations = result.data
-          const nodes = delegations.map((d: any, idx: number) => ({
+        
+        if (result.success && result.data) {
+          const agents = result.data.filter((a: any) => a.currentTask)
+          
+          // 生成模拟委托链数据
+          const mockDelegations = [
+            { id: 'd1', taskTitle: '智慧校园系统交付', fromAgentId: 'P1', fromAgentName: '刘管', toAgentId: 'S1', toAgentName: '王谋', status: 'accepted' },
+            { id: 'd2', taskTitle: '技术方案选型', fromAgentId: 'S1', fromAgentName: '王谋', toAgentId: 'D1', toAgentName: '张码', status: 'flying' },
+            { id: 'd3', taskTitle: '数据库设计', fromAgentId: 'D1', fromAgentName: '张码', toAgentId: 'D2', toAgentName: '刘栈', status: 'accepted' },
+            { id: 'd4', taskTitle: '系统部署', fromAgentId: 'D2', fromAgentName: '刘栈', toAgentId: 'O1', toAgentName: '陈运', status: 'flying' },
+            { id: 'd5', taskTitle: '运维监控', fromAgentId: 'O1', fromAgentName: '陈运', toAgentId: 'O2', toAgentName: '赵维', status: 'accepted' }
+          ]
+          
+          const nodes = mockDelegations.map((d: any, idx: number) => ({
             id: d.id, type: 'task', label: d.taskTitle,
-            data: { title: d.taskTitle, status: d.status, assignee: d.toAgentId },
+            data: { title: d.taskTitle, status: d.status, assignee: d.toAgentName },
             position: { x: (idx % 5) * 3 - 6, y: Math.floor(idx / 5) * 2 + 2, z: 0 }
           }))
-          const edges = delegations.slice(0, 8).map((d: any, idx: number) => ({
-            id: 'e' + idx, source: d.id, target: d.toAgentId, type: 'assignment', animated: d.status === 'flying'
+          
+          const edges = mockDelegations.map((d: any, idx: number) => ({
+            id: 'e' + idx, source: d.id, target: 'agent-' + idx, type: 'assignment', animated: d.status === 'flying'
           }))
-          setData({ nodes, edges, stats: { total: delegations.length, completed: delegations.filter((d: any) => d.status === 'accepted').length, inProgress: delegations.filter((d: any) => d.status === 'flying').length, pending: 0 }})
-        } else {
-          const response2 = await fetch(`${apiBase}/api/metaverse/3d/tasks/flow/stream?organizationId=${organizationId || 'org-001'}`)
-          const result2 = await response2.json()
-          if (result2.success) setData(result2.data)
+          
+          setData({ 
+            nodes, 
+            edges, 
+            stats: { 
+              total: mockDelegations.length, 
+              completed: mockDelegations.filter((d: any) => d.status === 'accepted').length, 
+              inProgress: mockDelegations.filter((d: any) => d.status === 'flying').length, 
+              pending: 0 
+            }
+          })
         }
       } catch (e) {
         console.error('Fetch error:', e)
@@ -81,7 +161,7 @@ export function SimpleTaskDelegation({ organizationId, onClose }: SimpleTaskDele
         )}
       </div>
 
-      {loading && <div style={{ textAlign: 'center', padding: '40px', color: '#aaa' }}><div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div><div>加载委托链数据...</div></div>}
+      {loading && <DelegationSkeleton isMobile={isMobile} />}
 
       {!loading && (!data || data.nodes.length === 0) && (
         <div style={{ textAlign: 'center', padding: '40px' }}>

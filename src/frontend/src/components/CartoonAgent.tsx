@@ -251,6 +251,20 @@ function WalkingCartoonAgentComponent({
   // 创建名字纹理
   const nameTexture = useMemo(() => createNameTexture(config.name, config.color), [config.name, config.color])
   
+  // 创建角色图标纹理 - 使用useMemo避免SSR问题
+  const iconTexture = useMemo(() => {
+    if (typeof document === 'undefined') return null
+    const canvas = document.createElement('canvas')
+    canvas.width = 64
+    canvas.height = 64
+    const ctx = canvas.getContext('2d')!
+    ctx.font = '48px Arial'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(config.icon, 32, 32)
+    return new THREE.CanvasTexture(canvas)
+  }, [config.icon])
+  
   // 获取移动速度
   const getMovementSpeed = () => {
     switch (status) {
@@ -592,22 +606,12 @@ function WalkingCartoonAgentComponent({
         </mesh>
         
         {/* 角色图标 */}
-        <mesh position={[0, config.height * 1.15, 0]}>
-          <planeGeometry args={[0.5, 0.5]} />
-          <meshBasicMaterial>
-            <canvasTexture attach="map" image={(() => {
-              const canvas = document.createElement('canvas')
-              canvas.width = 64
-              canvas.height = 64
-              const ctx = canvas.getContext('2d')!
-              ctx.font = '48px Arial'
-              ctx.textAlign = 'center'
-              ctx.textBaseline = 'middle'
-              ctx.fillText(config.icon, 32, 32)
-              return canvas
-            })()} />
-          </meshBasicMaterial>
-        </mesh>
+        {iconTexture && (
+          <mesh position={[0, config.height * 1.15, 0]}>
+            <planeGeometry args={[0.5, 0.5]} />
+            <meshBasicMaterial map={iconTexture} transparent />
+          </mesh>
+        )}
         
         {/* 左手臂 */}
         <mesh ref={leftArmRef} position={[-0.4 * s, config.height * 0.5, 0]}>
